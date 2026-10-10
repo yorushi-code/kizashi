@@ -145,8 +145,15 @@ Item {
         });
     }
 
+    Timer {
+        id: dataUpdateDebounceTimer
+        interval: 200
+        repeat: false
+        onTriggered: requestDataUpdate()
+    }
+
     function activateTab() {
-        requestDataUpdate();
+        dataUpdateDebounceTimer.restart();
         introHeader = 0.0; introStats = 0.0; introMidLeft = 0.0;
         introMidRight = 0.0; introBottom = 0.0; introAppBars = 0.0;
         introAnim.restart();
@@ -157,7 +164,7 @@ Item {
     }
 
     Component.onCompleted: {
-        activateTab();
+        if (visible) activateTab();
     }
 
     function updateFromData(data) {

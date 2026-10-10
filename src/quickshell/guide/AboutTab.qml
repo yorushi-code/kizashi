@@ -99,7 +99,7 @@ Item {
 
                                 Image {
                                     anchors.fill: parent
-                                    source: "file://" + rootObj.appPaths.kizashiDir + "/assets/logo.svg"
+                                    source: "file://" + (typeof Caching !== "undefined" && Caching.kizashiDir ? Caching.kizashiDir : (rootObj && rootObj.appPaths ? rootObj.appPaths.kizashiDir : "")) + "/assets/logo.svg"
                                     sourceSize: Qt.size(512, 512)
                                     fillMode: Image.PreserveAspectFit
                                     smooth: true

@@ -9,6 +9,7 @@ import Quickshell.Services.SystemTray
 import "../reusables"
 import "../"
 import "."
+import "../WindowRegistry.js" as WindowRegistry
 
 Item {
     id: contentWrapper
@@ -320,20 +321,38 @@ Item {
     property real screenMinLeft: isFill ? fillInset : (barWindow ? (barWindow.s(1) + distinctEdgePadding) : distinctEdgePadding)
     property real screenMaxRight: isFill ? (contentWrapper.width - fillInset) : (barWindow ? (contentWrapper.width - barWindow.s(1) - distinctEdgePadding) : (contentWrapper.width - distinctEdgePadding))
 
+    property real sysPanelWidth: {
+        let fallback = (barWindow && typeof barWindow.s === "function") ? barWindow.s(500) : 500;
+        if (typeof WindowRegistry !== "undefined" && typeof WindowRegistry.getLayout === "function") {
+            let scrW = (barWindow && barWindow.screen) ? barWindow.screen.width : (contentWrapper.width || 1920);
+            let scrH = (barWindow && barWindow.screen) ? barWindow.screen.height : 1080;
+            let scale = (typeof Scaler !== "undefined" && Scaler.uiScale !== undefined) ? Scaler.uiScale : 1.0;
+            let bp = (barWindow && barWindow.barPosition) ? barWindow.barPosition : "top";
+            let layout = WindowRegistry.getLayout("system", 0, 0, scrW, scrH, scale, bp);
+            if (layout && layout.w) return layout.w;
+        }
+        return fallback;
+    }
+
+    property real sysBoundary: Math.max(0, contentWrapper.width - sysPanelWidth)
+    property real sysMaxRight: isFill ? (contentWrapper.width - fillInset) : Math.max(screenMinLeft, sysBoundary - (barWindow ? barWindow.s(1) : 0) - distinctEdgePadding)
+    property real sysEffectiveMaxRight: Math.min(baseMaxRight, sysMaxRight)
+    property real effectiveMaxRight: (layoutState === "sys") ? sysEffectiveMaxRight : screenMaxRight
+
     property real rawCNaturalX: {
         if (layoutState === "settings") return screenMaxRight - rWidthTarget - crGap - cWidthTarget;
-        if (layoutState === "sys") return screenMinLeft + lWidthTarget + lcGap;
+        if (layoutState === "sys") return (sysBoundary - cWidthTarget) / 2;
         return (contentWrapper.width - cWidthTarget) / 2;
     }
 
     property real absMinC: (lWidthTarget > 0) ? (screenMinLeft + lWidthTarget + lcGap) : screenMinLeft
-    property real absMaxC: (rWidthTarget > 0) ? (screenMaxRight - rWidthTarget - crGap - cWidthTarget) : (screenMaxRight - cWidthTarget)
+    property real absMaxC: (rWidthTarget > 0) ? (effectiveMaxRight - rWidthTarget - crGap - cWidthTarget) : (effectiveMaxRight - cWidthTarget)
 
     property real cResolvedX: {
         if (absMinC <= absMaxC) {
             return Math.max(absMinC, Math.min(absMaxC, rawCNaturalX));
         }
-        return Math.max(screenMinLeft, Math.min(screenMaxRight - cWidthTarget, rawCNaturalX));
+        return absMinC;
     }
 
     property real cFinalX: cResolvedX
@@ -348,11 +367,10 @@ Item {
     }
 
     property real rFinalX: {
-        if (rWidthTarget <= 0) return baseMaxRight;
-        if (layoutState === "sys") {
-            return Math.min(screenMaxRight - rWidthTarget, cFinalX + cWidthTarget + crGap);
-        }
-        let pushedX = Math.max(baseMaxRight - rWidthTarget, cFinalX + cWidthTarget + crGap);
+        if (rWidthTarget <= 0) return (layoutState === "sys" ? sysEffectiveMaxRight : baseMaxRight);
+        let naturalR = (layoutState === "sys") ? (sysEffectiveMaxRight - rWidthTarget) : (baseMaxRight - rWidthTarget);
+        let minR = (cWidthTarget > 0) ? (cFinalX + cWidthTarget + crGap) : ((lWidthTarget > 0) ? (lFinalX + lWidthTarget + lcGap) : screenMinLeft);
+        let pushedX = Math.max(naturalR, minR);
         return Math.min(screenMaxRight - rWidthTarget, pushedX);
     }
     property real rFinalClampedX: Math.max(screenMinLeft, Math.min(screenMaxRight - rWidthTarget, rFinalX))

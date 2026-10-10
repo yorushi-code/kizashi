@@ -10,6 +10,7 @@ import "../reusables"
 
 Item {
     id: window
+    visible: false
     focus: true
 
     function s(val) {

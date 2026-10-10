@@ -12,6 +12,7 @@ import "../reusables"
 
 Item {
     id: window
+    visible: false
     focus: true
 
     function animWin(t, a, b) {

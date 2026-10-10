@@ -11,6 +11,7 @@ import "../reusables"
 
 Item {
     id: window
+    visible: false
     focus: true
 
     function s(val) {
@@ -259,11 +260,16 @@ Item {
                                 id: orbWave
                                 anchors.fill: parent
 
-                                property real wavePhase: 0.0
-                                NumberAnimation on wavePhase {
-                                    running: window.visible && window.activeVol > 0 && window.activeVol < 100
+                                property real wavePhase: 0.8
+                                NumberAnimation {
+                                    id: orbWaveAnim
+                                    target: orbWave
+                                    property: "wavePhase"
+                                    running: window.visible && coreMa.containsMouse && window.activeVol > 0 && window.activeVol < 100
                                     loops: Animation.Infinite
-                                    from: 0; to: Math.PI * 2; duration: 1200
+                                    from: 0
+                                    to: Math.PI * 2
+                                    duration: 1200
                                 }
 
                                 radius: ThemeBackend.borderRadius
@@ -325,6 +331,7 @@ Item {
                             }
 
                             MouseArea {
+                                id: coreMa
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor

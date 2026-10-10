@@ -327,22 +327,32 @@ Item {
         }
     }
 
+    Timer {
+        id: activateDebounceTimer
+        interval: 220
+        repeat: false
+        onTriggered: {
+            wallpaperDirScanner.running = false;
+            wallpaperDirScanner.running = true;
+            wallFetcher.running = false;
+            wallFetcher.running = true;
+            if (themeTabRoot._needsReload) {
+                themeTabRoot._needsReload = false;
+                themeTabRoot.reloadThemes();
+            }
+        }
+    }
+
     function activateTab() {
         themeTabRoot.loadAvailableFonts();
-        wallpaperDirScanner.running = false;
-        wallpaperDirScanner.running = true;
-        wallFetcher.running = false;
-        wallFetcher.running = true;
-        if (themeTabRoot._needsReload) {
-            themeTabRoot._needsReload = false;
-            themeTabRoot.reloadThemes();
-        }
+        activateDebounceTimer.restart();
     }
 
     onVisibleChanged: {
         if (visible) {
             activateTab();
         } else {
+            activateDebounceTimer.stop();
             if (fontDropdown.isOpen) fontDropdown.closePopup();
             if (wpDirDropdown.isOpen) wpDirDropdown.closePopup();
             themeEditorPopup.close();
@@ -432,7 +442,10 @@ Item {
     }
 
     Component.onCompleted: {
-        activateTab();
+        themeTabRoot.loadAvailableFonts();
+        if (visible) {
+            activateTab();
+        }
     }
 
     function saveCustomTheme(themeObj) {

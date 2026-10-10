@@ -21,6 +21,10 @@ Item {
     property bool isSway: false
     property int niriActiveIndex: 0
     property var niriOccupiedMap: ({})
+    property var niriExistingMap: ({})
+    property int niriMaxWorkspaceIndex: 0
+    property var lastNiriWorkspaces: []
+    property var lastNiriWindows: []
     property int swayActiveIndex: 0
     property var swayOccupiedMap: ({})
 
@@ -58,7 +62,14 @@ Item {
         return 8;
     }
 
-    property int workspaceCount: Math.max(2, (activeIndex >= baseWorkspaceCount) ? (activeIndex + 1) : baseWorkspaceCount)
+    property int workspaceCount: {
+        let base = baseWorkspaceCount;
+        let act = activeIndex;
+        let count = base;
+        if (act >= count) count = act + 1;
+        if (isNiri && niriMaxWorkspaceIndex >= count) count = niriMaxWorkspaceIndex + 1;
+        return Math.max(2, count);
+    }
 
     property bool hideEmptyWorkspaces: {
         let dummy = configRevision;
@@ -127,7 +138,7 @@ Item {
     }
 
     function isOccupied(index) {
-        if (isNiri) return !!niriOccupiedMap[index];
+        if (isNiri) return !!(niriExistingMap[index] && niriOccupiedMap[index]);
         if (isSway) return !!swayOccupiedMap[index];
         let ws = wsForId(index + 1);
         return ws !== null && ws.toplevels && ws.toplevels.values && ws.toplevels.values.length > 0;
@@ -141,7 +152,9 @@ Item {
     function focusWorkspace(index) {
         let wsId = index + 1;
         if (isNiri) {
-            niriActiveIndex = index;
+            if (niriExistingMap[index] || Object.keys(niriExistingMap).length === 0) {
+                niriActiveIndex = index;
+            }
             Quickshell.execDetached(["niri", "msg", "action", "focus-workspace", wsId.toString()]);
         } else if (isSway) {
             swayActiveIndex = index;
@@ -154,7 +167,7 @@ Item {
     property int activeIndex: {
         let idx = -1;
         if (isNiri) {
-            idx = niriActiveIndex;
+            idx = (niriExistingMap[niriActiveIndex] || Object.keys(niriExistingMap).length === 0) ? niriActiveIndex : -1;
         } else if (isSway) {
             idx = swayActiveIndex;
         } else {
@@ -163,6 +176,119 @@ Item {
             idx = fw.id - 1;
         }
         return idx >= 0 ? idx : -1;
+    }
+
+    function processNiriData(wsList, winList) {
+        if (!Array.isArray(wsList)) wsList = [];
+        if (!Array.isArray(winList)) winList = [];
+
+        let wsIdsWithWindows = {};
+        for (let i = 0; i < winList.length; i++) {
+            let win = winList[i];
+            if (win && win.workspace_id !== undefined && win.workspace_id !== null) {
+                wsIdsWithWindows[win.workspace_id] = true;
+            }
+        }
+
+        let occ = {};
+        let existing = {};
+        let maxIdx = 0;
+        for (let j = 0; j < wsList.length; j++) {
+            let w = wsList[j];
+            if (!w) continue;
+            let idx = (w.idx !== undefined ? w.idx : 1) - 1;
+            if (idx >= 0) {
+                existing[idx] = true;
+                if (idx > maxIdx) maxIdx = idx;
+                if ((w.active_window_id !== null && w.active_window_id !== undefined) || wsIdsWithWindows[w.id]) {
+                    occ[idx] = true;
+                }
+            }
+        }
+
+        let myOutput = (barWindow && barWindow.screen && barWindow.screen.name) ? barWindow.screen.name : "";
+        let activeIdx = -1;
+
+        if (myOutput) {
+            for (let j = 0; j < wsList.length; j++) {
+                let w = wsList[j];
+                if (w && w.output === myOutput && w.is_focused) {
+                    activeIdx = (w.idx !== undefined ? w.idx : 1) - 1;
+                    break;
+                }
+            }
+            if (activeIdx < 0) {
+                for (let j = 0; j < wsList.length; j++) {
+                    let w = wsList[j];
+                    if (w && w.output === myOutput && w.is_active) {
+                        activeIdx = (w.idx !== undefined ? w.idx : 1) - 1;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (activeIdx < 0) {
+            for (let j = 0; j < wsList.length; j++) {
+                let w = wsList[j];
+                if (w && w.is_focused) {
+                    activeIdx = (w.idx !== undefined ? w.idx : 1) - 1;
+                    break;
+                }
+            }
+        }
+
+        if (activeIdx < 0) {
+            for (let j = 0; j < wsList.length; j++) {
+                let w = wsList[j];
+                if (w && w.is_active) {
+                    activeIdx = (w.idx !== undefined ? w.idx : 1) - 1;
+                    break;
+                }
+            }
+        }
+
+        if (activeIdx < 0 && wsList.length > 0) {
+            activeIdx = (wsList[0].idx !== undefined ? wsList[0].idx : 1) - 1;
+        }
+
+        root.niriMaxWorkspaceIndex = maxIdx;
+        root.niriExistingMap = existing;
+        root.niriOccupiedMap = occ;
+        if (activeIdx >= 0) {
+            root.niriActiveIndex = activeIdx;
+        }
+    }
+
+    function handleNiriEvent(rawJson) {
+        try {
+            let ev = JSON.parse(rawJson);
+            if (ev.WorkspacesChanged && ev.WorkspacesChanged.workspaces) {
+                lastNiriWorkspaces = ev.WorkspacesChanged.workspaces;
+                processNiriData(lastNiriWorkspaces, lastNiriWindows);
+            } else if (ev.WindowsChanged && ev.WindowsChanged.windows) {
+                lastNiriWindows = ev.WindowsChanged.windows;
+                processNiriData(lastNiriWorkspaces, lastNiriWindows);
+            } else if (ev.WorkspaceActivated) {
+                let actId = ev.WorkspaceActivated.id;
+                let isFoc = ev.WorkspaceActivated.focused !== false;
+                for (let i = 0; i < lastNiriWorkspaces.length; i++) {
+                    let w = lastNiriWorkspaces[i];
+                    if (w.id === actId) {
+                        w.is_active = true;
+                        if (isFoc) w.is_focused = true;
+                    } else if (w.output === ev.WorkspaceActivated.output) {
+                        w.is_active = false;
+                        w.is_focused = false;
+                    }
+                }
+                processNiriData(lastNiriWorkspaces, lastNiriWindows);
+            } else if (ev.WindowOpenedOrChanged || ev.WindowClosed || ev.WindowFocusChanged) {
+                niriDebounceTimer.restart();
+            }
+        } catch (e) {
+            niriDebounceTimer.restart();
+        }
     }
 
     Component.onCompleted: {
@@ -211,8 +337,9 @@ Item {
         repeat: false
         onTriggered: {
             if (root.moduleActive && root.isNiri) {
-                niriPoller.running = false;
-                niriPoller.running = true;
+                if (!niriPoller.running) {
+                    niriPoller.running = true;
+                }
             }
         }
     }
@@ -236,8 +363,9 @@ Item {
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: data => {
-                if (data.trim().length > 0) {
-                    niriDebounceTimer.restart();
+                let trimmed = data.trim();
+                if (trimmed.length > 0) {
+                    root.handleNiriEvent(trimmed);
                 }
             }
         }
@@ -260,29 +388,15 @@ Item {
             onStreamFinished: {
                 try {
                     let data = JSON.parse(this.text);
-                    let wsList = data.workspaces || [];
-                    let winList = data.windows || [];
-                    let occ = {};
-                    for (let i = 0; i < winList.length; i++) {
-                        let win = winList[i];
-                        if (win.workspace_id !== undefined && win.workspace_id !== null) {
-                            occ[win.workspace_id] = true;
-                        }
-                    }
-                    let activeIdx = 0;
-                    for (let j = 0; j < wsList.length; j++) {
-                        let w = wsList[j];
-                        let idx = (w.idx !== undefined ? w.idx : (w.id !== undefined ? w.id : 1)) - 1;
-                        if (w.is_focused || w.is_active) {
-                            activeIdx = idx;
-                        }
-                        if (w.active_window_id !== null || occ[w.id] || occ[w.idx]) {
-                            occ[idx] = true;
-                        }
-                    }
-                    root.niriActiveIndex = activeIdx;
-                    root.niriOccupiedMap = occ;
+                    root.lastNiriWorkspaces = data.workspaces || [];
+                    root.lastNiriWindows = data.windows || [];
+                    root.processNiriData(root.lastNiriWorkspaces, root.lastNiriWindows);
                 } catch (e) {}
+            }
+        }
+        onExited: {
+            if (root.moduleActive && root.isNiri && niriDebounceTimer.running) {
+                niriPoller.running = true;
             }
         }
     }
@@ -364,19 +478,27 @@ Item {
                 root.wheelAccumulator = root.wheelAccumulator % threshold;
 
                 if (root.workspaceCount > 1) {
-                    let cur = root.activeIndex;
-                    let nextIndex = 0;
-                    if (cur < 0) {
-                        nextIndex = steps > 0 ? (root.workspaceCount - 1) : 0;
-                    } else {
+                    if (root.isNiri) {
                         if (steps > 0) {
-                            nextIndex = (cur - 1 + root.workspaceCount) % root.workspaceCount;
+                            Quickshell.execDetached(["niri", "msg", "action", "focus-workspace-up"]);
                         } else if (steps < 0) {
-                            nextIndex = (cur + 1) % root.workspaceCount;
+                            Quickshell.execDetached(["niri", "msg", "action", "focus-workspace-down"]);
                         }
-                    }
-                    if (nextIndex !== root.activeIndex) {
-                        root.focusWorkspace(nextIndex);
+                    } else {
+                        let cur = root.activeIndex;
+                        let nextIndex = 0;
+                        if (cur < 0) {
+                            nextIndex = steps > 0 ? (root.workspaceCount - 1) : 0;
+                        } else {
+                            if (steps > 0) {
+                                nextIndex = (cur - 1 + root.workspaceCount) % root.workspaceCount;
+                            } else if (steps < 0) {
+                                nextIndex = (cur + 1) % root.workspaceCount;
+                            }
+                        }
+                        if (nextIndex !== root.activeIndex) {
+                            root.focusWorkspace(nextIndex);
+                        }
                     }
                 }
             }

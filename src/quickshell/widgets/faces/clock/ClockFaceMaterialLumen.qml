@@ -20,9 +20,13 @@ Item {
 
     Timer {
         interval: root.showSeconds ? 40 : 1000
-        running: true
+        running: root.visible
         repeat: true
         onTriggered: root.currentTime = new Date()
+    }
+
+    onVisibleChanged: {
+        if (root.visible) root.currentTime = new Date();
     }
 
     function resolveColor(token, fallback) {

@@ -13,10 +13,10 @@ import "../reusables/media"
 
 Item {
     id: root
-
+    visible: false
     focus: true
 
-    readonly property bool active: root.visible && (!Window.window || Window.window.visible)
+    readonly property bool active: root.visible
 
     property bool cavaRegistered: false
 

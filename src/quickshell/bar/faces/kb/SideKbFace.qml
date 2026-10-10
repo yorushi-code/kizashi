@@ -15,11 +15,43 @@ Item {
     property var module: null
     property var widget: module
 
-    readonly property bool isCompact: module ? module.isCompact : false
-    readonly property var barWindow: module ? module.barWindow : null
+    readonly property var activeTarget: widget || module
+    readonly property bool isCompact: activeTarget ? activeTarget.isCompact : false
+    readonly property var barWindow: activeTarget ? activeTarget.barWindow : null
+    readonly property bool isPreview: activeTarget ? Boolean(activeTarget.isPreview) : false
+
+    function s(val) {
+        if (barWindow && typeof barWindow.s === "function") return barWindow.s(val);
+        if (activeTarget && typeof activeTarget.s === "function") return activeTarget.s(val);
+        if (typeof Scaler !== "undefined" && typeof Scaler.s === "function") return Math.round(Scaler.s(val));
+        return val;
+    }
+
+    property int configRevision: 0
+
+    Connections {
+        target: (typeof Config !== "undefined") ? Config : null
+        function onSettingsLoaded() { root.configRevision++; }
+        function onRawSettingsChanged() { root.configRevision++; }
+    }
+
+    property string kbStyle: {
+        if (widget && widget !== root && widget.kbStyle !== undefined) return widget.kbStyle;
+        if (module && module.kbStyle !== undefined) return module.kbStyle;
+        let dummy = configRevision;
+        if (typeof Config !== "undefined" && Config.rawSettings) {
+            let ss = Config.rawSettings.sideBar;
+            if (ss && ss.kbStyle) return ss.kbStyle;
+            let bs = Config.rawSettings.bar;
+            if (bs && bs.sideKbStyle) return bs.sideKbStyle;
+            if (bs && bs.kbStyle) return bs.kbStyle;
+            if (bs && bs.kb && bs.kb.style) return bs.kb.style;
+        }
+        return "button";
+    }
 
     property string kbLayout: "US"
-    property bool showLayout: false
+    property bool showLayout: (!barWindow || isPreview) ? true : false
     property alias kbPill: kbBtn
     property bool isNiri: false
     property bool isSway: false
@@ -31,7 +63,7 @@ Item {
     }
 
     Connections {
-        target: module || null
+        target: (!root.isPreview && module) ? module : null
         function onModuleActiveChanged() {
             if (module && !module.moduleActive) {
                 kbPoller.running = false;
@@ -45,7 +77,7 @@ Item {
 
     Process {
         id: kbPoller
-        running: !module || module.moduleActive
+        running: !root.isPreview && (!module || module.moduleActive)
         command: [
             "bash",
             "-c",
@@ -59,7 +91,7 @@ Item {
             onStreamFinished: {
                 let txt = this.text.trim();
                 if (txt !== "" && root.kbLayout !== txt) root.kbLayout = txt;
-                if ((!module || module.moduleActive) && !kbWaiter.running) kbWaiter.running = true;
+                if (!root.isPreview && (!module || module.moduleActive) && !kbWaiter.running) kbWaiter.running = true;
                 if (barWindow) barWindow.fastPollerLoaded = true;
             }
         }
@@ -74,35 +106,74 @@ Item {
         ]
         onExited: {
             kbPoller.running = false;
-            if (!module || module.moduleActive) kbPoller.running = true;
+            if (!root.isPreview && (!module || module.moduleActive)) kbPoller.running = true;
         }
     }
 
-    property real targetHeight: kbBtn.height + (barWindow ? barWindow.s(root.isCompact ? 8 : 10) : (root.isCompact ? 8 : 10))
+    property real targetHeight: {
+        if (module && !module.moduleActive) return 0;
+        if (root.kbStyle === "text") {
+            return (sideText.implicitHeight > 0) ? (sideText.implicitHeight + s(root.isCompact ? 14 : 16)) : 0;
+        }
+        return (kbBtn.height > 0) ? (kbBtn.height + s(root.isCompact ? 8 : 10)) : 0;
+    }
     property bool isFaceVisible: showLayout && targetHeight > 0
 
     implicitHeight: targetHeight
     implicitWidth: parent ? parent.width : 0
 
     Timer {
-        running: (!module || module.moduleActive) && barWindow && barWindow.isStartupReady && barWindow.isDataReady
+        running: !root.isPreview && (!module || module.moduleActive) && barWindow && barWindow.isStartupReady && barWindow.isDataReady
         interval: 100
         onTriggered: root.showLayout = true
     }
 
+    MouseArea {
+        id: sideTextMouseArea
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        enabled: root.kbStyle === "text" && !root.isPreview
+        onClicked: {
+            if (root.isNiri) {
+                Quickshell.execDetached(["niri", "msg", "action", "switch-layout", "next"]);
+            } else if (root.isSway) {
+                Quickshell.execDetached(["swaymsg", "input", "type:keyboard", "xkb_switch_layout", "next"]);
+            } else {
+                Quickshell.execDetached(["hyprctl", "switchxkblayout", "main", "next"]);
+            }
+        }
+    }
+
+    Text {
+        id: sideText
+        visible: root.kbStyle === "text"
+        anchors.centerIn: parent
+        text: root.kbLayout
+        font.family: ThemeBackend.fontFamily
+        font.pixelSize: s(root.isCompact ? 11 : 12)
+        font.bold: true
+        color: sideTextMouseArea.containsMouse ? Qt.lighter(ThemeBackend.text, 1.15) : ThemeBackend.text
+        opacity: root.showLayout ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { duration: 450; easing.type: Easing.OutCubic } }
+        Behavior on color { ColorAnimation { duration: 150 } }
+    }
+
     ClickButton {
         id: kbBtn
+        visible: root.kbStyle !== "text"
         anchors.centerIn: parent
-        width: barWindow ? barWindow.s(root.isCompact ? 28 : 30) : (root.isCompact ? 28 : 30)
-        height: barWindow ? barWindow.s(root.isCompact ? 28 : 30) : (root.isCompact ? 28 : 30)
-        cornerRadius: Math.max(0, ThemeBackend.borderRadius - (barWindow ? barWindow.s(2) : 2))
+        width: s(root.isCompact ? 28 : 30)
+        height: s(root.isCompact ? 28 : 30)
+        cornerRadius: Math.max(0, ThemeBackend.borderRadius - s(2))
         horizontalPadding: 0
         buttonText: root.kbLayout
-        textFontSize: barWindow ? barWindow.s(root.isCompact ? 11 : 12) : (root.isCompact ? 11 : 12)
+        textFontSize: s(root.isCompact ? 11 : 12)
         accentColor: root.isCompact ? Qt.lighter(ThemeBackend.surface0, 1.18) : ThemeBackend.surface0
         textColor: isHoveredOrHighlighted ? ThemeBackend.text : (root.isCompact ? Qt.lighter(ThemeBackend.text, 1.05) : ThemeBackend.text)
 
         onClicked: {
+            if (root.isPreview) return;
             if (root.isNiri) {
                 Quickshell.execDetached(["niri", "msg", "action", "switch-layout", "next"]);
             } else if (root.isSway) {

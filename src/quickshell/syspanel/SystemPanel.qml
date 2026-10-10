@@ -14,6 +14,7 @@ import "../reusables"
 
 Item {
     id: root
+    visible: false
     focus: true
     enabled: visible
 
