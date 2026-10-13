@@ -1,3 +1,64 @@
+### 2.2.8
+
+- fix: disable cursor warping in hyprland settings and simplify window focus dispatch
+- fix: preserve cursor position when focusing window on hyprland
+- fix: support hyprland lua dispatcher syntax for dock and app menu window focus
+- style: accelerate desktop menu and dock app menu animations
+- style: animate desktop menu from click point with snappy spring transition
+- style: speed up dock app menu opening and closing animations
+- feat: add hover scale effects to unpinned dock items and refine menu transitions
+- Merge branch 'feat/dock-running-apps'
+- refactor: redesign dock app menu with reusable buttons and edge-safe placement
+- fix: resolve dock runningInfo binding loop and support immediate app switching in menu
+- fix: resolve dock window focus TypeError, binding loop and click interception
+- fix: dock app menu animations, app switching, and niri window focus
+- fix: resolve dock autohide with popouts, spacing calculations, and edge overlap
+- feat: implement running applications tracking and window switching in dock
+- feat(i18n): add Bulgarian translation
+- fix(quickactions): invert tab and arrow navigation on top edge in floating panel
+- fix(filepicker): replace the filepicker's checkmark button with a Done clickbutton
+- perf(sysdata): decrease live network sampling frequency to 3s
+- feat(sysdata): show live network speed instead of manual scan (#422)
+
+### 2.2.7
+
+- feat(i18n): register new languages in guide and detect Traditional Chinese locales
+- feat(i18n): add Hindi translation
+- feat(i18n): add Persian translation
+- feat(i18n): add Dutch translation
+- feat(i18n): add Indonesian translation
+- feat(i18n): add Turkish translation
+- feat(i18n): add Polish translation
+- feat(i18n): add Traditional Chinese translation
+- feat(i18n): add Simplified Chinese translation
+- feat(i18n): add Japanese translation
+- fix(dock): eliminate hover gaps between apps and allow unclipped hover scaling
+- feat(i18n): add French translation and language option in guide
+- feat(lyrics): add free scrolling, click-to-seek, and word-scoped dragging
+- perf(wallpaper): selectively preload picker in main and optimize filter lifecycle
+- feat: add Arabic translation and full RTL layout support
+- style: make floating panel background fully opaque
+- fix: correct tab name orientation when floating panel is at bottom
+- fix(audio): resolve cava watchdog deadlock, process signals and stream filtering
+- fix: optimize cava lifecycle with pipewire stream detection and resolve binding loop
+- perf(niri): share one event-stream between workspaces, dock and keyboard modules (#419)
+- fix(screenshot): explicitly grab keyboard focus when overlay is activated
+- fix(floating): switch keyboard focus to on-demand to prevent starving exclusive overlays
+- fix(input): hide typing pop animation overlay on text removal in multiline input
+- perf(music): watch the equalizer state file instead of polling equalizer.sh (#418)
+- perf(sysdata): keep fetcher state on tmpfs instead of ~/.cache (#417)
+- feat(osd): add value readout for volume and brightness sliders
+- fix(clipboard): prevent image preview flicker during expansion animation
+- feat: add reverse exit animations for all window registry components
+- chore: flake update
+- fix(screenshot): toggle audio mute on right click instead of closing overlay
+- feat: default idle actions to media inhibit and increase expanded header spacing
+- feat(screenshot): toggle audio sliders on click and merge audio tracks into single stream
+- fix(guide): prevent wallpaper preview flicker in matugen theme card
+- fix(notes): fix invalid anchors on header drag area
+- fix(notes): select content input on first click anywhere in bottom area
+- fix(quickactions): release keyboard focus in collapsed state and avoid forcing focus
+
 ### 2.2.6
 
 - fix(bar): stop the battery wave when no charge is flowing (#416)
@@ -11,7 +72,7 @@
 - fix(widgets): resolve ReferenceError when removing widget in WidgetRedactor
 - fix: correct filled content box height in SystemUsageCard
 - fix(audio): resolve binding loops in audio device and stream cache
-- fix(audio): tag and filter out yoake sfx streams from volume stream list
+- fix(audio): tag and filter out kizashi sfx streams from volume stream list
 - fix(workspaces): fix active and occupied state tracking on niri dynamic workspaces
 - fix(bar): show all running timers in info faces simultaneously
 - feat(bar): add text style for battery module
@@ -66,7 +127,7 @@
 - fix(focus): ignore unfocused window title events in sway (fixing the same issue for Sway as in #390)
 - perf(focus): eliminate reload lag and optimize active window tracking
 - perf(bar): skip visualizer level processing in hidden or unused modes (#395)
-- fix(wallpaper): persist search state in cache json instead of QSettings yoake.conf
+- fix(wallpaper): persist search state in cache json instead of QSettings kizashi.conf
 - fix(inputs): persist password reveal via Config singleton
 - fix(widgets): properly remove deleted widgets from model and tear down faces
 - fix(inputs): restore persistent reveal state with explicit settings location
@@ -350,7 +411,7 @@
 - fix: launcher having a bad corner at the bottom
 - fix: dock evaluation warning
 - fix: Dock taking up mouse area clicking when in hidden mode
-- fix a local function call bug in yoaked
+- fix a local function call bug in kizashid
 - fix: make all dock settings hide when dock is disabled
 
 ### 2.1.3
@@ -373,7 +434,7 @@
 - style: make all of the settings have separate configuration boxes
 - fix: wallpaper picker recent wallpaper animation fixed
 - fix wallpaper dir not being properly set on install
-- fix: yoake not cleanly killing the quickshell process
+- fix: kizashi not cleanly killing the quickshell process
 - fix: a right corner in clipboard having a wrong target coordinate
 - fix sounds not having access to the config
 - Remove duplicate no-op lines in QR polygon parser (#253)
@@ -473,7 +534,7 @@
 - style: change the volume of the whoosh sound in the MusicPopup equalizer
 - feat: BlueLight singleton to ensure that bluelight applies on shell startup
 - fix: stale thumbnails in the music player due to asynchronious loading
-- fix: yoake --version flag to display version correctly on nix
+- fix: kizashi --version flag to display version correctly on nix
 - fix: make sure focus_daemon.py doesn't self-duplicate on reload and doesn't inflate the usage time
 - feat: change the default icon in grouped notificatoins in the NotificationBox to use the icon of the grouped notifications that it contains
 - fix(nix): add a ... to declare rev from flake.nix

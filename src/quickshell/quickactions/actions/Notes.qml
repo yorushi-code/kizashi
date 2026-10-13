@@ -849,29 +849,91 @@ Item {
                                     onClicked: root.saveCurrentNote()
                                 }
 
-                                ColumnLayout {
-                                    id: headerTitleCol
+                                Item {
+                                    id: headerTitleArea
                                     Layout.fillWidth: true
-                                    Layout.alignment: Qt.AlignVCenter
-                                    spacing: 0
+                                    Layout.fillHeight: true
 
-                                    Text {
-                                        text: root.isMarkdownPreview ? I18n.t("quickactions.notes.preview_note") : I18n.t("quickactions.notes.edit_note")
-                                        color: ThemeBackend.text
-                                        font.family: ThemeBackend.fontFamily
-                                        font.pixelSize: root.s(12.5)
-                                        font.bold: true
-                                        Layout.fillWidth: true
-                                        elide: Text.ElideRight
+                                    ColumnLayout {
+                                        id: headerTitleCol
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: 0
+
+                                        Text {
+                                            text: root.isMarkdownPreview ? I18n.t("quickactions.notes.preview_note") : I18n.t("quickactions.notes.edit_note")
+                                            color: ThemeBackend.text
+                                            font.family: ThemeBackend.fontFamily
+                                            font.pixelSize: root.s(12.5)
+                                            font.bold: true
+                                            Layout.fillWidth: true
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            text: root.formatPreciseTime(root.editingUpdatedAt)
+                                            color: ThemeBackend.subtext0
+                                            font.family: ThemeBackend.fontFamily
+                                            font.pixelSize: root.s(9.5)
+                                            Layout.fillWidth: true
+                                            elide: Text.ElideRight
+                                        }
                                     }
 
-                                    Text {
-                                        text: root.formatPreciseTime(root.editingUpdatedAt)
-                                        color: ThemeBackend.subtext0
-                                        font.family: ThemeBackend.fontFamily
-                                        font.pixelSize: root.s(9.5)
-                                        Layout.fillWidth: true
-                                        elide: Text.ElideRight
+                                    MouseArea {
+                                        id: headerDragArea
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+
+                                        property real startY: 0
+                                        property bool draggingV: false
+
+                                        onPressed: mouse => {
+                                            startY = mouse.y;
+                                            draggingV = false;
+                                            root.isDraggingV = false;
+                                        }
+
+                                        onPositionChanged: mouse => {
+                                            if (!pressed) return;
+                                            let dy = mouse.y - startY;
+                                            if (!draggingV && dy > root.s(6)) {
+                                                draggingV = true;
+                                                root.isDraggingV = true;
+                                                preventStealing = true;
+                                            }
+                                            if (draggingV) {
+                                                let prog = Math.max(0.0, Math.min(1.0, 1.0 - (dy / root.s(90))));
+                                                root.expandProgress = prog;
+                                            }
+                                        }
+
+                                        onReleased: {
+                                            preventStealing = false;
+                                            if (draggingV) {
+                                                root.isDraggingV = false;
+                                                draggingV = false;
+                                                if (root.expandProgress < 0.65) {
+                                                    root.saveCurrentNote();
+                                                } else {
+                                                    root.expandProgress = 1.0;
+                                                }
+                                            }
+                                        }
+
+                                        onCanceled: {
+                                            preventStealing = false;
+                                            if (draggingV) {
+                                                root.isDraggingV = false;
+                                                draggingV = false;
+                                                if (root.expandProgress < 0.65) {
+                                                    root.saveCurrentNote();
+                                                } else {
+                                                    root.expandProgress = 1.0;
+                                                }
+                                            }
+                                        }
                                     }
                                 }
 
@@ -914,66 +976,6 @@ Item {
                                     implicitHeight: root.s(32)
                                     Layout.alignment: Qt.AlignVCenter
                                     onClicked: root.saveCurrentNote()
-                                }
-                            }
-
-                            MouseArea {
-                                id: headerDragArea
-                                anchors.left: closeBtn.right
-                                anchors.right: pinBtn.left
-                                anchors.top: parent.top
-                                anchors.bottom: parent.bottom
-                                anchors.leftMargin: root.s(6)
-                                anchors.rightMargin: root.s(6)
-                                hoverEnabled: true
-
-                                property real startY: 0
-                                property bool draggingV: false
-
-                                onPressed: mouse => {
-                                    startY = mouse.y;
-                                    draggingV = false;
-                                    root.isDraggingV = false;
-                                }
-
-                                onPositionChanged: mouse => {
-                                    if (!pressed) return;
-                                    let dy = mouse.y - startY;
-                                    if (!draggingV && dy > root.s(6)) {
-                                        draggingV = true;
-                                        root.isDraggingV = true;
-                                        preventStealing = true;
-                                    }
-                                    if (draggingV) {
-                                        let prog = Math.max(0.0, Math.min(1.0, 1.0 - (dy / root.s(90))));
-                                        root.expandProgress = prog;
-                                    }
-                                }
-
-                                onReleased: {
-                                    preventStealing = false;
-                                    if (draggingV) {
-                                        root.isDraggingV = false;
-                                        draggingV = false;
-                                        if (root.expandProgress < 0.65) {
-                                            root.saveCurrentNote();
-                                        } else {
-                                            root.expandProgress = 1.0;
-                                        }
-                                    }
-                                }
-
-                                onCanceled: {
-                                    preventStealing = false;
-                                    if (draggingV) {
-                                        root.isDraggingV = false;
-                                        draggingV = false;
-                                        if (root.expandProgress < 0.65) {
-                                            root.saveCurrentNote();
-                                        } else {
-                                            root.expandProgress = 1.0;
-                                        }
-                                    }
                                 }
                             }
                         }
@@ -1022,6 +1024,18 @@ Item {
                             id: editorContent
                             Layout.fillWidth: true
                             Layout.fillHeight: true
+
+                            TapHandler {
+                                enabled: !root.isMarkdownPreview
+                                onPressedChanged: {
+                                    if (pressed) {
+                                        contentInput.forceInputFocus();
+                                    }
+                                }
+                                onTapped: {
+                                    contentInput.forceInputFocus();
+                                }
+                            }
 
                             Input {
                                 id: contentInput

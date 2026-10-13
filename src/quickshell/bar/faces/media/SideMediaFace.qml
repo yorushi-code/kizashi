@@ -18,6 +18,7 @@ Item {
     readonly property bool isCompact: module ? module.isCompact : false
     readonly property var barWindow: module ? module.barWindow : null
     readonly property bool isRightBar: module ? module.isRightBar : (barWindow ? (barWindow.barPosition === "right") : false)
+    readonly property real barOpacity: (module && module.barOpacity !== undefined) ? module.barOpacity : (barWindow && barWindow.barOpacity !== undefined ? barWindow.barOpacity : (typeof Config !== "undefined" && Config.rawSettings && Config.rawSettings.bar && Config.rawSettings.bar.opacity !== undefined ? (Config.rawSettings.bar.opacity / 100.0) : 1.0))
 
     property var playerList: {
         if (!Mpris.players || !Mpris.players.values) return [];
@@ -172,6 +173,7 @@ Item {
                 buttonIcon: "󰒮"
                 iconFontSize: barWindow ? barWindow.s(root.isCompact ? 6 : 7) : (root.isCompact ? 6 : 7)
                 accentColor: root.isCompact ? Qt.lighter(ThemeBackend.surface0, 1.18) : ThemeBackend.surface0
+                bgOpacity: root.barOpacity
                 textColor: isHoveredOrHighlighted ? ThemeBackend.text : (root.isCompact ? ThemeBackend.subtext0 : ThemeBackend.overlay2)
                 anchors.horizontalCenter: parent.horizontalCenter
                 onClicked: if (targetPlayer && targetPlayer.canGoPrevious) targetPlayer.previous()
@@ -184,6 +186,7 @@ Item {
                 buttonIcon: (isMediaActive && isPlaying) ? "󰏤" : "󰐊"
                 iconFontSize: barWindow ? barWindow.s(root.isCompact ? 8 : 9) : (root.isCompact ? 8 : 9)
                 accentColor: root.isCompact ? Qt.lighter(ThemeBackend.surface0, 1.18) : ThemeBackend.surface0
+                bgOpacity: root.barOpacity
                 textColor: isHoveredOrHighlighted ? ThemeBackend.green : (root.isCompact ? Qt.lighter(ThemeBackend.text, 1.1) : ThemeBackend.text)
                 anchors.horizontalCenter: parent.horizontalCenter
                 onClicked: if (targetPlayer && targetPlayer.canTogglePlaying) targetPlayer.togglePlaying()
@@ -196,6 +199,7 @@ Item {
                 buttonIcon: "󰒭"
                 iconFontSize: barWindow ? barWindow.s(root.isCompact ? 6 : 7) : (root.isCompact ? 6 : 7)
                 accentColor: root.isCompact ? Qt.lighter(ThemeBackend.surface0, 1.18) : ThemeBackend.surface0
+                bgOpacity: root.barOpacity
                 textColor: isHoveredOrHighlighted ? ThemeBackend.text : (root.isCompact ? ThemeBackend.subtext0 : ThemeBackend.overlay2)
                 anchors.horizontalCenter: parent.horizontalCenter
                 onClicked: if (targetPlayer && targetPlayer.canGoNext) targetPlayer.next()

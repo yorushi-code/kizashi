@@ -41,7 +41,7 @@ FocusScope {
     property bool revealTyping: true
     property int revealDuration: 300
 
-    property int horizontalAlignment: TextInput.AlignLeft
+    property int horizontalAlignment: I18n.rtl ? TextInput.AlignRight : TextInput.AlignLeft
     property int charSlotWidth: -1
     property int charSpacing: 1
     property alias symbolSpacing: root.charSpacing
@@ -315,6 +315,12 @@ FocusScope {
     }
 
     TapHandler {
+        onPressedChanged: {
+            if (pressed) {
+                root.forceInputFocus();
+                root.clicked();
+            }
+        }
         onTapped: {
             root.forceInputFocus();
             root.clicked();
@@ -336,6 +342,7 @@ FocusScope {
     }
 
     RowLayout {
+        layoutDirection: I18n.layoutDirection
         anchors.fill: parent
         anchors.leftMargin: root.horizontalPadding
         anchors.rightMargin: root.horizontalPadding
@@ -547,6 +554,19 @@ FocusScope {
                 boundsBehavior: Flickable.StopAtBounds
                 clip: true
 
+                TapHandler {
+                    onPressedChanged: {
+                        if (pressed) {
+                            root.forceInputFocus();
+                            root.clicked();
+                        }
+                    }
+                    onTapped: {
+                        root.forceInputFocus();
+                        root.clicked();
+                    }
+                }
+
                 ScrollBar.vertical: ScrollBar {
                     active: multiFlickable.moving || multiFlickable.movingVertically
                     width: 4
@@ -560,6 +580,8 @@ FocusScope {
 
                 Text {
                     id: multiPlaceholder
+                    anchors.fill: parent
+                    horizontalAlignment: I18n.textAlignment
                     text: root.placeholderText
                     font.family: root.fontFamily
                     font.pixelSize: root.fontPixelSize
@@ -571,10 +593,12 @@ FocusScope {
                 TextEdit {
                     id: innerTextEdit
                     width: multiFlickable.width
+                    height: Math.max(multiFlickable.height, contentHeight)
                     focus: root.multiLine
                     color: root.textColor
                     font.family: root.fontFamily
                     font.pixelSize: root.fontPixelSize
+                    horizontalAlignment: I18n.textAlignment
                     wrapMode: TextEdit.Wrap
                     selectByMouse: true
                     cursorVisible: false
@@ -602,6 +626,9 @@ FocusScope {
                                     typingPop.popY = r.y;
                                     popAnim.restart();
                                 }
+                            } else {
+                                popAnim.stop();
+                                typingPop.popOpacity = 0.0;
                             }
                             root.text = text;
                             if (typeof Sounds !== "undefined") {
@@ -636,6 +663,7 @@ FocusScope {
 
                     ParallelAnimation {
                         id: popAnim
+                        onFinished: typingPop.popOpacity = 0.0
                         NumberAnimation { target: typingPop; property: "popScale"; from: 0.3; to: 1.0; duration: 420; easing.type: Easing.OutBack; easing.overshoot: 3.2 }
                         NumberAnimation { target: typingPop; property: "popOffsetY"; from: 10; to: 0; duration: 420; easing.type: Easing.OutBack; easing.overshoot: 2.5 }
                         NumberAnimation { target: typingPop; property: "popOpacity"; from: 0.0; to: 1.0; duration: 140; easing.type: Easing.OutCubic }

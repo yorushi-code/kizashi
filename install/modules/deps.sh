@@ -54,7 +54,7 @@ REQUIRED_PKGS=(
     "imagemagick" "wget" "file" "git" "psmisc"
     "ffmpeg" "fastfetch" "quickshell" "unzip" "python-websockets" "python-jeepney" "qt6-websockets"
     "grim" "playerctl" "satty" "xdg-desktop-portal-gtk" "slurp" "wmctrl" "power-profiles-daemon" "easyeffects" "lsp-plugins-lv2" "nautilus" "qt5-wayland" "qt5-quickcontrols" "qt5-quickcontrols2" "qt5-graphicaleffects" "qt6-wayland"
-    "qt5ct" "qt6ct" "gpu-screen-recorder" "wf-recorder" "adw-gtk-theme" "wl-gammarelay-rs"
+    "qt5ct" "qt6ct" "adwaita-icon-theme" "gpu-screen-recorder" "wf-recorder" "adw-gtk-theme" "wl-gammarelay-rs"
 )
 
 FAILED_PKGS=()
@@ -166,6 +166,35 @@ install_fonts() {
     fi
 }
 
+configure_qt_icon_theme() {
+    local icon_theme="Adwaita"
+    local config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+    local qtct
+
+    for qtct in qt5ct qt6ct; do
+        local conf="$config_home/$qtct/$qtct.conf"
+        mkdir -p "$config_home/$qtct"
+        if [ ! -f "$conf" ]; then
+            printf '[Appearance]\nicon_theme=%s\n' "$icon_theme" > "$conf"
+        elif grep -q '^icon_theme=.\+' "$conf"; then
+            continue
+        elif grep -q '^icon_theme=' "$conf"; then
+            sed -i "s|^icon_theme=.*|icon_theme=$icon_theme|" "$conf"
+        elif grep -q '^\[Appearance\]' "$conf"; then
+            sed -i "/^\[Appearance\]/a icon_theme=$icon_theme" "$conf"
+        else
+            printf '\n[Appearance]\nicon_theme=%s\n' "$icon_theme" >> "$conf"
+        fi
+    done
+
+    local env_dir="$config_home/environment.d"
+    local env_file="$env_dir/kizashi-qt.conf"
+    if [ -z "${QT_QPA_PLATFORMTHEME:-}" ] && ! grep -rqs '^QT_QPA_PLATFORMTHEME=' "$env_dir" 2>/dev/null; then
+        mkdir -p "$env_dir"
+        printf 'QT_QPA_PLATFORMTHEME=qt6ct\n' > "$env_file"
+    fi
+}
+
 install_dependencies() {
     local install_state="${1:-$INSTALL_STATE}"
     local is_reinstall="${2:-$IS_REINSTALL}"
@@ -226,4 +255,5 @@ install_dependencies() {
     fi
 
     install_fonts
+    configure_qt_icon_theme
 }

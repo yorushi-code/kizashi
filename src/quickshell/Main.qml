@@ -24,7 +24,7 @@ PanelWindow {
     Shortcut {
         sequence: "Escape"
         context: Qt.WindowShortcut
-        enabled: masterWindow.isVisible
+        enabled: masterWindow.isVisible && !masterWindow.isClosing
         onActivated: switchWidget("hidden", "")
     }
 
@@ -145,6 +145,9 @@ PanelWindow {
             let effectivelyActive = masterWindow.targetActive;
 
             if (cmd === "close") {
+                if (typeof DockAppMenuController !== "undefined") {
+                    DockAppMenuController.hide();
+                }
                 switchWidget("hidden", "");
             } else if (cmd === "toggle" || cmd === "open") {
                 if (targetWidget === effectivelyActive) {
@@ -304,7 +307,7 @@ PanelWindow {
 
     MouseArea {
         anchors.fill: parent
-        enabled: masterWindow.isVisible && !masterWindow.isCurrentDraggable
+        enabled: masterWindow.isVisible && !masterWindow.isCurrentDraggable && !masterWindow.isClosing
         onClicked: switchWidget("hidden", "")
     }
 
@@ -355,6 +358,8 @@ PanelWindow {
             if (masterWindow.currentActive === "hidden") {
                 let t = masterWindow.getLayout("guide");
                 if (t) masterWindow.ensureWidgetItem("guide", t);
+                let w = masterWindow.getLayout("wallpaper");
+                if (w) masterWindow.ensureWidgetItem("wallpaper", w);
             }
         });
     }
@@ -380,6 +385,7 @@ PanelWindow {
     }
 
     property bool isVisible: false
+    property bool isClosing: false
     property string activeArg: ""
     property bool disableMorph: true
     property int switchGeneration: 0
@@ -641,18 +647,43 @@ PanelWindow {
         if (delayedClear.running) {
             delayedClear.stop();
         }
+        if (exitSafetyTimer.running) {
+            exitSafetyTimer.stop();
+        }
 
         if (newWidget === "hidden") {
-            if (currentActive !== "hidden") {
-                masterWindow.currentActive = "hidden";
-                masterWindow.morphDuration = masterWindow.exitDuration;
-                masterWindow.disableMorph = true;
-                masterWindow.isVisible = false;
+            if (currentActive !== "hidden" && !masterWindow.isClosing) {
+                let closingGen = gen;
+                masterWindow.isClosing = true;
+                masterWindow.targetActive = "hidden";
 
-                delayedClear.scheduledGeneration = gen;
-                delayedClear.restart();
+                let activeItem = widgetCache[currentActive] || widgetStack.currentItem;
+
+                let finalizeClose = function() {
+                    if (closingGen !== masterWindow.switchGeneration) return;
+                    masterWindow.isClosing = false;
+                    masterWindow.currentActive = "hidden";
+                    masterWindow.morphDuration = masterWindow.exitDuration;
+                    masterWindow.disableMorph = true;
+                    masterWindow.isVisible = false;
+
+                    for (let k in widgetCache) {
+                        let it = widgetCache[k];
+                        if (it) it.visible = false;
+                    }
+                    reportWidgetState();
+                };
+
+                if (activeItem && typeof activeItem.startExit === "function") {
+                    exitSafetyTimer.scheduledGeneration = closingGen;
+                    exitSafetyTimer.restart();
+                    activeItem.startExit(finalizeClose);
+                } else {
+                    finalizeClose();
+                }
             }
         } else {
+            masterWindow.isClosing = false;
             let targetScreen = resolveTargetScreen();
             if (targetScreen && masterWindow.screen !== targetScreen) {
                 masterWindow.screen = targetScreen;
@@ -745,6 +776,26 @@ PanelWindow {
                     masterWindow.disableMorph = false;
                 }
             });
+        }
+    }
+
+    Timer {
+        id: exitSafetyTimer
+        interval: 450
+        property int scheduledGeneration: -1
+        onTriggered: {
+            if (scheduledGeneration === masterWindow.switchGeneration && masterWindow.isClosing) {
+                masterWindow.isClosing = false;
+                masterWindow.currentActive = "hidden";
+                masterWindow.morphDuration = masterWindow.exitDuration;
+                masterWindow.disableMorph = true;
+                masterWindow.isVisible = false;
+                for (let k in widgetCache) {
+                    let it = widgetCache[k];
+                    if (it) it.visible = false;
+                }
+                reportWidgetState();
+            }
         }
     }
 

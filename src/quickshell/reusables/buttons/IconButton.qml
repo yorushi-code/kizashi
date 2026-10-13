@@ -20,11 +20,14 @@ Item {
 
     property color accentColor: ThemeBackend.surface0
     property color textColor: "#11111b"
+    property real bgOpacity: 1.0
 
     property bool action_highlight: false
     property string clickSound: "reusables/iconbutton/click.wav"
+    property int acceptedButtons: Qt.LeftButton
 
     signal clicked()
+    signal rightClicked()
     signal triggered()
 
     property real flashOpacity: 0.0
@@ -32,16 +35,9 @@ Item {
 
     property bool isHoveredOrHighlighted: (btnMa.containsMouse || root.action_highlight) && root.enabled
 
-    Rectangle {
-        id: btnShape
+    Item {
+        id: btnContainer
         anchors.fill: parent
-        radius: root.cornerRadius
-        clip: true
-        color: !root.enabled ? root.accentColor : (btnMa.pressed ? Qt.darker(root.accentColor, 1.12) : (root.isHoveredOrHighlighted ? Qt.lighter(root.accentColor, 1.12) : root.accentColor))
-        opacity: root.enabled ? 1.0 : 0.5
-
-        Behavior on color { ColorAnimation { duration: 180 } }
-        Behavior on opacity { NumberAnimation { duration: 180 } }
 
         scale: (!root.enabled ? 1.0 : (btnMa.pressed ? 1.08 : (root.isHoveredOrHighlighted ? 1.04 : 1.0))) * root.popScale
         Behavior on scale { NumberAnimation { duration: 250; easing.type: Easing.OutQuint } }
@@ -50,6 +46,18 @@ Item {
             id: btnPopAnim
             NumberAnimation { target: root; property: "popScale"; to: 1.1; duration: 110; easing.type: Easing.OutQuad }
             NumberAnimation { target: root; property: "popScale"; to: 1.0; duration: 420; easing.type: Easing.OutQuint }
+        }
+
+        Rectangle {
+            id: btnShape
+            anchors.fill: parent
+            radius: root.cornerRadius
+            clip: true
+            color: !root.enabled ? root.accentColor : (btnMa.pressed ? Qt.darker(root.accentColor, 1.12) : (root.isHoveredOrHighlighted ? Qt.lighter(root.accentColor, 1.12) : root.accentColor))
+            opacity: (root.enabled ? 1.0 : 0.5) * root.bgOpacity
+
+            Behavior on color { ColorAnimation { duration: 180 } }
+            Behavior on opacity { NumberAnimation { duration: 180 } }
         }
 
         Text {
@@ -62,6 +70,7 @@ Item {
             color: root.textColor
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
+            opacity: root.enabled ? 1.0 : 0.5
         }
 
         Rectangle {
@@ -77,10 +86,15 @@ Item {
             anchors.fill: parent
             hoverEnabled: root.enabled
             enabled: root.enabled
+            acceptedButtons: root.acceptedButtons
             cursorShape: root.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
 
-            onClicked: {
+            onClicked: (mouse) => {
                 if (!root.enabled) return;
+                if (mouse.button === Qt.RightButton) {
+                    root.rightClicked();
+                    return;
+                }
                 btnPopAnim.start();
                 root.flashOpacity = 0.4;
                 btnFlashAnim.start();

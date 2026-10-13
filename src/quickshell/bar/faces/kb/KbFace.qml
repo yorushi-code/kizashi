@@ -64,18 +64,48 @@ Item {
     property string kbLayout: "US"
     property bool showLayout: (!barWindow || isPreview) ? true : false
     property alias kbPill: kbPill
-    property bool isNiri: false
+    readonly property bool isNiri: NiriState.isNiri
     property bool isSway: false
+    property bool niriSubscribed: false
+
+    function syncNiriSubscription() {
+        let want = isNiri && !root.isPreview && (!module || module.moduleActive);
+        if (want === niriSubscribed) return;
+        niriSubscribed = want;
+        if (want) NiriState.subscribe();
+        else NiriState.unsubscribe();
+    }
+
+    function applyNiriLayout() {
+        if (!NiriState.keyboardReady) return;
+        let txt = NiriState.shortKeyboardLayout;
+        if (txt !== "" && root.kbLayout !== txt) root.kbLayout = txt;
+        if (barWindow) barWindow.fastPollerLoaded = true;
+    }
 
     Component.onCompleted: {
         let de = SystemInfo.desktopEnv ? SystemInfo.desktopEnv.toLowerCase() : "";
-        root.isNiri = de.indexOf("niri") !== -1;
         root.isSway = de.indexOf("sway") !== -1;
+        syncNiriSubscription();
+        if (root.isNiri) applyNiriLayout();
+    }
+
+    Component.onDestruction: {
+        if (niriSubscribed) NiriState.unsubscribe();
+    }
+
+    Connections {
+        target: NiriState
+        enabled: root.isNiri
+        function onShortKeyboardLayoutChanged() { root.applyNiriLayout(); }
+        function onKeyboardReadyChanged() { root.applyNiriLayout(); }
     }
 
     Connections {
         target: (!root.isPreview && module) ? module : null
         function onModuleActiveChanged() {
+            root.syncNiriSubscription();
+            if (root.isNiri) return;
             if (module && !module.moduleActive) {
                 kbPoller.running = false;
                 kbWaiter.running = false;
@@ -88,15 +118,13 @@ Item {
 
     Process {
         id: kbPoller
-        running: !root.isPreview && (!module || module.moduleActive)
+        running: !root.isPreview && (!module || module.moduleActive) && !root.isNiri
         command: [
             "bash",
             "-c",
-            root.isNiri
-                ? "layout=$(niri msg -j keyboard-layouts 2>/dev/null | jq -r '.names[.current_idx] // empty' | head -n1); [[ -z \"$layout\" || \"$layout\" == \"null\" ]] && layout=\"US\"; echo \"${layout:0:2}\" | tr '[:lower:]' '[:upper:]'"
-                : (root.isSway
-                    ? "layout=$(swaymsg -t get_inputs 2>/dev/null | jq -r '[.[] | select(.type == \"keyboard\" and .xkb_active_layout_name != null)] | .[0].xkb_active_layout_name // empty' | head -n1); [[ -z \"$layout\" || \"$layout\" == \"null\" ]] && layout=\"US\"; echo \"${layout:0:2}\" | tr '[:lower:]' '[:upper:]'"
-                    : "layout=$(LC_ALL=C hyprctl devices -j 2>/dev/null | jq -r '(.keyboards[] | select(.main == true) | .active_keymap) // .keyboards[0].active_keymap // empty' | head -n1); [[ -z \"$layout\" || \"$layout\" == \"null\" ]] && layout=\"US\"; echo \"${layout:0:2}\" | tr '[:lower:]' '[:upper:]'")
+            root.isSway
+                ? "layout=$(swaymsg -t get_inputs 2>/dev/null | jq -r '[.[] | select(.type == \"keyboard\" and .xkb_active_layout_name != null)] | .[0].xkb_active_layout_name // empty' | head -n1); [[ -z \"$layout\" || \"$layout\" == \"null\" ]] && layout=\"US\"; echo \"${layout:0:2}\" | tr '[:lower:]' '[:upper:]'"
+                : "layout=$(LC_ALL=C hyprctl devices -j 2>/dev/null | jq -r '(.keyboards[] | select(.main == true) | .active_keymap) // .keyboards[0].active_keymap // empty' | head -n1); [[ -z \"$layout\" || \"$layout\" == \"null\" ]] && layout=\"US\"; echo \"${layout:0:2}\" | tr '[:lower:]' '[:upper:]'"
         ]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -113,11 +141,11 @@ Item {
         command: [
             "bash",
             Caching.qsDir + "/watchers/kb_wait.sh",
-            root.isNiri ? "niri" : (root.isSway ? "sway" : "hyprland")
+            root.isSway ? "sway" : "hyprland"
         ]
         onExited: {
             kbPoller.running = false;
-            if (!root.isPreview && (!module || module.moduleActive)) kbPoller.running = true;
+            if (!root.isPreview && (!module || module.moduleActive) && !root.isNiri) kbPoller.running = true;
         }
     }
 

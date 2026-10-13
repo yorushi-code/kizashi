@@ -567,7 +567,8 @@
         "pictures": "Immagini",
         "music": "Musica",
         "documents": "Documenti"
-      }
+      },
+      "done": "Fatto"
     },
     "font_picker": {
       "title": "Seleziona un font",
@@ -795,6 +796,29 @@
       "smart_autohide": {
         "title": "Nascondi automaticamente intelligente",
         "desc": "Nascondi il dock solo quando ci sono finestre aperte, mantienilo visibile sul desktop"
+      },
+      "focus_running": {
+        "title": "Attiva finestra esistente",
+        "desc": "Facendo clic sull'icona di un'app si attiva la finestra aperta anziché avviarne una nuova istanza"
+      },
+      "show_running_indicators": {
+        "title": "Indicatori di esecuzione",
+        "desc": "Mostra indicatori a punto o barra sulle icone delle applicazioni aperte"
+      },
+      "show_running_apps": {
+        "title": "Mostra applicazioni aperte",
+        "desc": "Mostra le applicazioni aperte non bloccate nella dock"
+      },
+      "running_scope": {
+        "title": "Ambito finestre attive",
+        "desc": "Filtra le finestre in esecuzione visualizzate e controllate dalla dock",
+        "auto": "Automatico (predefinito del compositor)",
+        "all": "Tutti gli spazi di lavoro e schermi",
+        "output": "Solo schermo corrente",
+        "workspace": "Solo spazio di lavoro attivo"
+      },
+      "window_menu": {
+        "untitled": "Untitled"
       }
     },
     "lyrics_picker": {
@@ -937,7 +961,8 @@
     },
     "actions": {
       "unpair": "Scollega",
-      "scan": "Scansiona"
+      "scan": "Scansiona",
+      "sign_in": "Accedi"
     }
   },
   "notifications": {

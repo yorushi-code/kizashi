@@ -202,6 +202,12 @@ Item {
         return true;
     }
 
+    property real barOpacity: {
+        let bs = Config.getSetting("bar", {});
+        if (bs && bs.opacity !== undefined) return bs.opacity / 100.0;
+        return 1.0;
+    }
+
     readonly property var previewWidget: ({
         "s": function(v) { return rootObj ? rootObj.s(v) : v; },
         "workspaceCount": 5,
@@ -209,7 +215,7 @@ Item {
         "isCompact": false,
         "isOccupied": function(idx) { return idx === 0 || idx === 1 || idx === 2; },
         "focusWorkspace": function(idx) {},
-        "barWindow": { "startupCascadeFinished": true },
+        "barWindow": { "startupCascadeFinished": true, "barOpacity": barModulesRoot.barOpacity },
         "moduleActive": true
     })
 
@@ -226,7 +232,7 @@ Item {
         property string monthStr: (typeof DateTime !== "undefined" && DateTime.monthShort) ? DateTime.monthShort : "Sep"
         property string fullDateStr: (typeof DateTime !== "undefined" && DateTime.fullDate) ? DateTime.fullDate : "Fri, Sep 18"
         property string dateStr: (typeof DateTime !== "undefined" && DateTime.fullDate) ? DateTime.fullDate : "Fri, Sep 18"
-        property var barWindow: ({ "startupCascadeFinished": true, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
+        property var barWindow: ({ "startupCascadeFinished": true, "barOpacity": barModulesRoot.barOpacity, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
         property bool moduleActive: barModulesRoot.visible
     }
 
@@ -238,7 +244,7 @@ Item {
         property string visAlignment: barModulesRoot.visAlignment
         property bool visContinuous: barModulesRoot.visContinuous
         property bool isPreview: true
-        property var barWindow: ({ "startupCascadeFinished": true, "isStartupReady": true, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
+        property var barWindow: ({ "startupCascadeFinished": true, "isStartupReady": true, "barOpacity": barModulesRoot.barOpacity, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
         property bool moduleActive: barModulesRoot.visible
     }
 
@@ -249,7 +255,7 @@ Item {
         property string sysmonStyle: barModulesRoot.sysmonStyle
         property var sysmonStats: barModulesRoot.sysmonStats
         property bool isPreview: true
-        property var barWindow: ({ "startupCascadeFinished": true, "isStartupReady": true, "isDataReady": true, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
+        property var barWindow: ({ "startupCascadeFinished": true, "isStartupReady": true, "isDataReady": true, "barOpacity": barModulesRoot.barOpacity, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
         property bool moduleActive: barModulesRoot.visible
     }
 
@@ -261,7 +267,7 @@ Item {
         property bool batShowPercent: barModulesRoot.batShowPercent
         property bool batShowIcon: barModulesRoot.batShowIcon
         property bool isPreview: true
-        property var barWindow: ({ "startupCascadeFinished": true, "isStartupReady": true, "isDataReady": true, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
+        property var barWindow: ({ "startupCascadeFinished": true, "isStartupReady": true, "isDataReady": true, "barOpacity": barModulesRoot.barOpacity, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
         property bool moduleActive: barModulesRoot.visible
     }
 
@@ -273,7 +279,7 @@ Item {
         property bool wifiShowIcon: barModulesRoot.wifiShowIcon
         property bool wifiShowName: barModulesRoot.wifiShowName
         property bool isPreview: true
-        property var barWindow: ({ "startupCascadeFinished": true, "isStartupReady": true, "isDataReady": true, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
+        property var barWindow: ({ "startupCascadeFinished": true, "isStartupReady": true, "isDataReady": true, "barOpacity": barModulesRoot.barOpacity, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
         property bool moduleActive: barModulesRoot.visible
     }
 
@@ -285,7 +291,7 @@ Item {
         property bool btShowIcon: barModulesRoot.btShowIcon
         property bool btShowName: barModulesRoot.btShowName
         property bool isPreview: true
-        property var barWindow: ({ "startupCascadeFinished": true, "isStartupReady": true, "isDataReady": true, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
+        property var barWindow: ({ "startupCascadeFinished": true, "isStartupReady": true, "isDataReady": true, "barOpacity": barModulesRoot.barOpacity, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
         property bool moduleActive: barModulesRoot.visible
     }
 
@@ -297,7 +303,7 @@ Item {
         property bool volShowIcon: barModulesRoot.volShowIcon
         property bool volShowPercent: barModulesRoot.volShowPercent
         property bool isPreview: true
-        property var barWindow: ({ "startupCascadeFinished": true, "isStartupReady": true, "isDataReady": true, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
+        property var barWindow: ({ "startupCascadeFinished": true, "isStartupReady": true, "isDataReady": true, "barOpacity": barModulesRoot.barOpacity, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
         property bool moduleActive: barModulesRoot.visible
     }
 
@@ -308,7 +314,7 @@ Item {
         property string kbStyle: barModulesRoot.kbStyle
         property bool kbShowIcon: barModulesRoot.kbShowIcon
         property bool isPreview: true
-        property var barWindow: ({ "startupCascadeFinished": true, "isStartupReady": true, "isDataReady": true, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
+        property var barWindow: ({ "startupCascadeFinished": true, "isStartupReady": true, "isDataReady": true, "barOpacity": barModulesRoot.barOpacity, "s": function(v) { return rootObj ? rootObj.s(v) : v; } })
         property bool moduleActive: barModulesRoot.visible
     }
 
@@ -493,6 +499,11 @@ Item {
         }
         if (!barModulesRoot.volShowIcon && !barModulesRoot.volShowPercent) {
             barModulesRoot.volShowIcon = true;
+        }
+        if (bs && bs.opacity !== undefined) {
+            barModulesRoot.barOpacity = bs.opacity / 100.0;
+        } else {
+            barModulesRoot.barOpacity = 1.0;
         }
     }
 
@@ -739,6 +750,9 @@ Item {
     Connections {
         target: Config
         function onSettingsLoaded() {
+            barModulesRoot.syncSettings();
+        }
+        function onRawSettingsChanged() {
             barModulesRoot.syncSettings();
         }
     }
@@ -2029,6 +2043,7 @@ Item {
                                                         "startupCascadeFinished": true,
                                                         "isStartupReady": true,
                                                         "isDataReady": true,
+                                                        "barOpacity": barModulesRoot.barOpacity,
                                                         "s": function(v) { return rootObj ? rootObj.s(v) : v; }
                                                     })
                                                     property bool moduleActive: barModulesRoot.visible
@@ -2322,6 +2337,7 @@ Item {
                                                         "startupCascadeFinished": true,
                                                         "isStartupReady": true,
                                                         "isDataReady": true,
+                                                        "barOpacity": barModulesRoot.barOpacity,
                                                         "s": function(v) { return rootObj ? rootObj.s(v) : v; }
                                                     })
                                                     property bool moduleActive: barModulesRoot.visible
@@ -2615,6 +2631,7 @@ Item {
                                                         "startupCascadeFinished": true,
                                                         "isStartupReady": true,
                                                         "isDataReady": true,
+                                                        "barOpacity": barModulesRoot.barOpacity,
                                                         "s": function(v) { return rootObj ? rootObj.s(v) : v; }
                                                     })
                                                     property bool moduleActive: barModulesRoot.visible
@@ -2908,6 +2925,7 @@ Item {
                                                         "startupCascadeFinished": true,
                                                         "isStartupReady": true,
                                                         "isDataReady": true,
+                                                        "barOpacity": barModulesRoot.barOpacity,
                                                         "s": function(v) { return rootObj ? rootObj.s(v) : v; }
                                                     })
                                                     property bool moduleActive: barModulesRoot.visible
@@ -3179,6 +3197,7 @@ Item {
                                                         "startupCascadeFinished": true,
                                                         "isStartupReady": true,
                                                         "isDataReady": true,
+                                                        "barOpacity": barModulesRoot.barOpacity,
                                                         "s": function(v) { return rootObj ? rootObj.s(v) : v; }
                                                     })
                                                     property bool moduleActive: barModulesRoot.visible

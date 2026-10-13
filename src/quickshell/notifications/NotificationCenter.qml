@@ -44,6 +44,14 @@ Item {
         }
     }
 
+    property var exitCallback: null
+
+    function startExit(onFinished) {
+        startupSequence.stop();
+        exitCallback = onFinished;
+        closeSequence.restart();
+    }
+
     SequentialAnimation {
         id: startupSequence
         NumberAnimation { 
@@ -62,19 +70,29 @@ Item {
                 target: root
                 property: "introContent"
                 to: 0.0
-                duration: 300
+                duration: 240
                 easing.type: Easing.InQuart
             }
         }
         ScriptAction { 
             script: {
-                Quickshell.execDetached(["bash", Caching.kizashiDir + "/scripts/qs_manager.sh", "close"]);
+                if (root.exitCallback) {
+                    let cb = root.exitCallback;
+                    root.exitCallback = null;
+                    cb();
+                } else {
+                    Quickshell.execDetached(["bash", Caching.kizashiDir + "/scripts/qs_manager.sh", "close"]);
+                }
             } 
         }    
     }
 
     Keys.onEscapePressed: (event) => {
-        closeSequence.start();
+        if (typeof masterWindow !== "undefined" && masterWindow.switchWidget) {
+            masterWindow.switchWidget("hidden", "");
+        } else {
+            closeSequence.restart();
+        }
         event.accepted = true;
     }
 

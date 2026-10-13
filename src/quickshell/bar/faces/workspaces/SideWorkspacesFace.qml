@@ -17,14 +17,22 @@ Item {
     readonly property var barWindow: module ? module.barWindow : null
     readonly property bool moduleActive: module ? module.moduleActive : true
 
-    property bool isNiri: false
+    readonly property bool isNiri: NiriState.isNiri
     property bool isSway: false
-    property int niriActiveIndex: 0
-    property var niriOccupiedMap: ({})
-    property var niriExistingMap: ({})
-    property int niriMaxWorkspaceIndex: 0
-    property var lastNiriWorkspaces: []
-    property var lastNiriWindows: []
+    readonly property string myOutput: (barWindow && barWindow.screen && barWindow.screen.name) ? barWindow.screen.name : ""
+    readonly property int niriActiveIndex: NiriState.activeIndexFor(myOutput)
+    readonly property var niriOccupiedMap: NiriState.occupiedMap
+    readonly property var niriExistingMap: NiriState.existingMap
+    readonly property int niriMaxWorkspaceIndex: NiriState.maxWorkspaceIndex
+    property bool niriSubscribed: false
+
+    function syncNiriSubscription() {
+        let want = isNiri && moduleActive;
+        if (want === niriSubscribed) return;
+        niriSubscribed = want;
+        if (want) NiriState.subscribe();
+        else NiriState.unsubscribe();
+    }
     property int swayActiveIndex: 0
     property var swayOccupiedMap: ({})
 
@@ -160,9 +168,6 @@ Item {
     function focusWorkspace(index) {
         let wsId = index + 1;
         if (isNiri) {
-            if (niriExistingMap[index] || Object.keys(niriExistingMap).length === 0) {
-                niriActiveIndex = index;
-            }
             Quickshell.execDetached(["niri", "msg", "action", "focus-workspace", wsId.toString()]);
         } else if (isSway) {
             swayActiveIndex = index;
@@ -186,225 +191,31 @@ Item {
         return idx >= 0 ? idx : -1;
     }
 
-    function processNiriData(wsList, winList) {
-        if (!Array.isArray(wsList)) wsList = [];
-        if (!Array.isArray(winList)) winList = [];
-
-        let wsIdsWithWindows = {};
-        for (let i = 0; i < winList.length; i++) {
-            let win = winList[i];
-            if (win && win.workspace_id !== undefined && win.workspace_id !== null) {
-                wsIdsWithWindows[win.workspace_id] = true;
-            }
-        }
-
-        let occ = {};
-        let existing = {};
-        let maxIdx = 0;
-        for (let j = 0; j < wsList.length; j++) {
-            let w = wsList[j];
-            if (!w) continue;
-            let idx = (w.idx !== undefined ? w.idx : 1) - 1;
-            if (idx >= 0) {
-                existing[idx] = true;
-                if (idx > maxIdx) maxIdx = idx;
-                if ((w.active_window_id !== null && w.active_window_id !== undefined) || wsIdsWithWindows[w.id]) {
-                    occ[idx] = true;
-                }
-            }
-        }
-
-        let myOutput = (barWindow && barWindow.screen && barWindow.screen.name) ? barWindow.screen.name : "";
-        let activeIdx = -1;
-
-        if (myOutput) {
-            for (let j = 0; j < wsList.length; j++) {
-                let w = wsList[j];
-                if (w && w.output === myOutput && w.is_focused) {
-                    activeIdx = (w.idx !== undefined ? w.idx : 1) - 1;
-                    break;
-                }
-            }
-            if (activeIdx < 0) {
-                for (let j = 0; j < wsList.length; j++) {
-                    let w = wsList[j];
-                    if (w && w.output === myOutput && w.is_active) {
-                        activeIdx = (w.idx !== undefined ? w.idx : 1) - 1;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (activeIdx < 0) {
-            for (let j = 0; j < wsList.length; j++) {
-                let w = wsList[j];
-                if (w && w.is_focused) {
-                    activeIdx = (w.idx !== undefined ? w.idx : 1) - 1;
-                    break;
-                }
-            }
-        }
-
-        if (activeIdx < 0) {
-            for (let j = 0; j < wsList.length; j++) {
-                let w = wsList[j];
-                if (w && w.is_active) {
-                    activeIdx = (w.idx !== undefined ? w.idx : 1) - 1;
-                    break;
-                }
-            }
-        }
-
-        if (activeIdx < 0 && wsList.length > 0) {
-            activeIdx = (wsList[0].idx !== undefined ? wsList[0].idx : 1) - 1;
-        }
-
-        root.niriMaxWorkspaceIndex = maxIdx;
-        root.niriExistingMap = existing;
-        root.niriOccupiedMap = occ;
-        if (activeIdx >= 0) {
-            root.niriActiveIndex = activeIdx;
-        }
-    }
-
-    function handleNiriEvent(rawJson) {
-        try {
-            let ev = JSON.parse(rawJson);
-            if (ev.WorkspacesChanged && ev.WorkspacesChanged.workspaces) {
-                lastNiriWorkspaces = ev.WorkspacesChanged.workspaces;
-                processNiriData(lastNiriWorkspaces, lastNiriWindows);
-            } else if (ev.WindowsChanged && ev.WindowsChanged.windows) {
-                lastNiriWindows = ev.WindowsChanged.windows;
-                processNiriData(lastNiriWorkspaces, lastNiriWindows);
-            } else if (ev.WorkspaceActivated) {
-                let actId = ev.WorkspaceActivated.id;
-                let isFoc = ev.WorkspaceActivated.focused !== false;
-                for (let i = 0; i < lastNiriWorkspaces.length; i++) {
-                    let w = lastNiriWorkspaces[i];
-                    if (w.id === actId) {
-                        w.is_active = true;
-                        if (isFoc) w.is_focused = true;
-                    } else if (w.output === ev.WorkspaceActivated.output) {
-                        w.is_active = false;
-                        w.is_focused = false;
-                    }
-                }
-                processNiriData(lastNiriWorkspaces, lastNiriWindows);
-            } else if (ev.WindowOpenedOrChanged || ev.WindowClosed || ev.WindowFocusChanged) {
-                niriDebounceTimer.restart();
-            }
-        } catch (e) {
-            niriDebounceTimer.restart();
-        }
-    }
-
     Component.onCompleted: {
         let de = SystemInfo.desktopEnv ? SystemInfo.desktopEnv.toLowerCase() : "";
-        root.isNiri = de.indexOf("niri") !== -1;
         root.isSway = de.indexOf("sway") !== -1;
-        if (root.isNiri && root.moduleActive) {
-            niriPoller.running = true;
-            niriEventStream.running = true;
-        }
+        syncNiriSubscription();
         if (root.isSway && root.moduleActive) {
             swayPoller.running = true;
         }
         syncModel();
     }
 
+    Component.onDestruction: {
+        if (niriSubscribed) NiriState.unsubscribe();
+    }
+
     onModuleActiveChanged: {
+        syncNiriSubscription();
         if (!moduleActive) {
-            if (isNiri) {
-                niriPoller.running = false;
-                niriDebounceTimer.stop();
-                niriRestartTimer.stop();
-                niriEventStream.running = false;
-            }
             if (isSway) {
                 swayPoller.running = false;
                 swayWaiter.running = false;
             }
         } else {
-            if (isNiri) {
-                niriPoller.running = false;
-                niriPoller.running = true;
-                niriEventStream.running = false;
-                niriEventStream.running = true;
-            }
             if (isSway) {
                 swayPoller.running = false;
                 swayPoller.running = true;
-            }
-        }
-    }
-
-    Timer {
-        id: niriDebounceTimer
-        interval: 50
-        repeat: false
-        onTriggered: {
-            if (root.moduleActive && root.isNiri) {
-                if (!niriPoller.running) {
-                    niriPoller.running = true;
-                }
-            }
-        }
-    }
-
-    Timer {
-        id: niriRestartTimer
-        interval: 1000
-        repeat: false
-        onTriggered: {
-            if (root.moduleActive && root.isNiri) {
-                niriEventStream.running = false;
-                niriEventStream.running = true;
-            }
-        }
-    }
-
-    Process {
-        id: niriEventStream
-        running: false
-        command: ["niri", "msg", "--json", "event-stream"]
-        stdout: SplitParser {
-            splitMarker: "\n"
-            onRead: data => {
-                let trimmed = data.trim();
-                if (trimmed.length > 0) {
-                    root.handleNiriEvent(trimmed);
-                }
-            }
-        }
-        onExited: {
-            if (root.moduleActive && root.isNiri) {
-                niriRestartTimer.restart();
-            }
-        }
-    }
-
-    Process {
-        id: niriPoller
-        running: false
-        command: [
-            "bash",
-            "-c",
-            "workspaces=$(niri msg -j workspaces 2>/dev/null || echo '[]'); windows=$(niri msg -j windows 2>/dev/null || echo '[]'); echo \"{\\\"workspaces\\\": $workspaces, \\\"windows\\\": $windows}\""
-        ]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    let data = JSON.parse(this.text);
-                    root.lastNiriWorkspaces = data.workspaces || [];
-                    root.lastNiriWindows = data.windows || [];
-                    root.processNiriData(root.lastNiriWorkspaces, root.lastNiriWindows);
-                } catch (e) {}
-            }
-        }
-        onExited: {
-            if (root.moduleActive && root.isNiri && niriDebounceTimer.running) {
-                niriPoller.running = true;
             }
         }
     }

@@ -568,7 +568,8 @@
         "pictures": "Pictures",
         "music": "Music",
         "documents": "Documents"
-      }
+      },
+      "done": "Done"
     },
     "font_picker": {
       "title": "Select a font",
@@ -796,6 +797,32 @@
       "smart_autohide": {
         "title": "Smart auto-hide",
         "desc": "Auto-hide dock only when windows are open, keep visible on desktop"
+      },
+      "focus_running": {
+        "title": "Focus existing window",
+        "desc": "Clicking an app icon activates its open window instead of launching a new instance"
+      },
+      "show_running_indicators": {
+        "title": "Running indicators",
+        "desc": "Show dot or pill indicators on open application icons"
+      },
+      "show_running_apps": {
+        "title": "Show open applications",
+        "desc": "Display unpinned open applications in the dock"
+      },
+      "running_scope": {
+        "title": "Active window scope",
+        "desc": "Filter running windows displayed and controlled by the dock",
+        "auto": "Automatic (compositor default)",
+        "all": "All workspaces & monitors",
+        "output": "Current monitor only",
+        "workspace": "Active workspace only"
+      },
+      "window_menu": {
+        "new_window": "New window",
+        "pin": "Pin to dock",
+        "unpin": "Unpin from dock",
+        "untitled": "Untitled"
       }
     },
     "lyrics_picker": {
@@ -938,7 +965,8 @@
     },
     "actions": {
       "unpair": "Unpair",
-      "scan": "Scan"
+      "scan": "Scan",
+      "sign_in": "Sign in"
     }
   },
   "notifications": {
@@ -1006,6 +1034,7 @@
       }
     },
     "draw": {
+      "hex": "Hex",
       "notification": {
         "app_name": "DrawAction",
         "saved_title": "Drawing saved",
@@ -1013,7 +1042,9 @@
         "copied_body": "Drawing copied to clipboard",
         "failed_title": "Export failed",
         "failed_body": "Could not save drawing"
-      }
+      },
+      "palette": "Palette",
+      "palette_default": "Default"
     },
     "notes": {
       "title": "Notes",
@@ -1259,7 +1290,8 @@
       "materialAnalog": "Material Analog",
       "lumen": "Lumen",
       "lyrics": "Lyrics",
-      "simpleLyrics": "Simple Lyrics"
+      "simpleLyrics": "Simple Lyrics",
+      "circle": "Circle"
     },
     "presets": {
       "minimal": {
@@ -1285,12 +1317,18 @@
     },
     "settings": {
       "lyricsLines": "Lines",
-      "lyricsAlignment": "Alignment"
+      "lyricsAlignment": "Alignment",
+      "usageStyle": "Style",
+      "lineThickness": "Thickness"
     },
     "align": {
       "left": "Left",
       "center": "Center",
       "right": "Right"
+    },
+    "style": {
+      "wave": "Wave",
+      "circle": "Circle"
     }
   },
   "cli": {

@@ -44,7 +44,17 @@ Item {
         return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
     }
 
+    property var exitCallback: null
+
+    function startExit(onFinished) {
+        introAnim.stop();
+        chargeAnim.stop();
+        exitCallback = onFinished;
+        exitAnim.restart();
+    }
+
     function resetAndPlayIntro() {
+        exitAnim.stop();
         introMain = 0;
         introCover = 0;
         introText = 0;
@@ -100,15 +110,9 @@ Item {
             resetAndPlayIntro();
             registerCava();
             triggerLocalArtFetch();
-            if (!eqProc.running) eqProc.running = true;
-            if (titleTextMain.implicitWidth > titleClipRect.width) {
-                marqueeContainer.x = 0;
-                titleAnim.restart();
-            }
         } else {
+            exitAnim.stop();
             unregisterCava();
-            titleAnim.stop();
-            marqueeContainer.x = 0;
             if (lyricsPickerPopup.visible || lyricsPickerPopup.opened) {
                 lyricsPickerPopup.closePicker();
             }
@@ -515,6 +519,39 @@ Item {
         }
     }
 
+    SequentialAnimation {
+        id: exitAnim
+        running: false
+        ParallelAnimation {
+            NumberAnimation { target: root; property: "introPresets"; to: 0.0; duration: 130; easing.type: Easing.InBack }
+            NumberAnimation { target: root; property: "introEqSliders"; to: 0.0; duration: 140; easing.type: Easing.InExpo }
+            SequentialAnimation {
+                PauseAnimation { duration: 30 }
+                NumberAnimation { target: root; property: "introEqHeader"; to: 0.0; duration: 130; easing.type: Easing.InCubic }
+                NumberAnimation { target: root; property: "introSeparator"; to: 0.0; duration: 130; easing.type: Easing.InCubic }
+            }
+            SequentialAnimation {
+                PauseAnimation { duration: 50 }
+                NumberAnimation { target: root; property: "introControls"; to: 0.0; duration: 140; easing.type: Easing.InBack }
+                NumberAnimation { target: root; property: "introText"; to: 0.0; duration: 140; easing.type: Easing.InCubic }
+                NumberAnimation { target: root; property: "introCover"; to: 0.0; duration: 150; easing.type: Easing.InBack }
+            }
+            SequentialAnimation {
+                PauseAnimation { duration: 70 }
+                NumberAnimation { target: root; property: "introMain"; to: 0.0; duration: 170; easing.type: Easing.InQuart }
+            }
+        }
+        ScriptAction {
+            script: {
+                if (root.exitCallback) {
+                    let cb = root.exitCallback;
+                    root.exitCallback = null;
+                    cb();
+                }
+            }
+        }
+    }
+
     property var borderColors: {
         var defaultColors = [ThemeBackend.mauve || "#cba6f7", ThemeBackend.blue || "#89b4fa", ThemeBackend.red || "#f38ba8", ThemeBackend.mauve || "#cba6f7"];
         var gradSource = root.activeGrad || (typeof MprisController !== "undefined" ? MprisController.grad : "");
@@ -584,38 +621,57 @@ Item {
         }
     }
 
-    Timer {
-        interval: 1000
-        running: root.active
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            if (!eqProc.running) eqProc.running = true;
+    property bool eqInitDone: false
+
+    function applyEqState(text) {
+        var outStr = text ? text.trim() : "";
+        if (outStr.length === 0) return;
+
+        // Our own writes land here too; skip them for a moment and re-read once they settle.
+        var sinceLocal = Date.now() - root.lastEqUpdate;
+        if (sinceLocal < 2000) {
+            eqResyncTimer.interval = 2000 - sinceLocal;
+            eqResyncTimer.restart();
+            return;
+        }
+
+        try {
+            var parsed = JSON.parse(outStr);
+            root.eqData = parsed;
+            if (!parsed.pending) {
+                root.savedEqData = Object.assign({}, parsed);
+            }
+        } catch(e) {}
+    }
+
+    // equalizer.sh keeps its state in this file; watch it instead of polling the script.
+    FileView {
+        id: eqStateFile
+        path: Caching.runDir + "/music/eq_state.json"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: root.applyEqState(text())
+        // The script creates the file with defaults on first use.
+        onLoadFailed: {
+            if (!root.eqInitDone && !eqInitProc.running) {
+                root.eqInitDone = true;
+                eqInitProc.running = true;
+            }
         }
     }
 
-    Process {
-        id: eqProc
-        running: true
-        command: ["bash", "-c", Caching.qsDir + "/media/equalizer.sh get"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (this.text) {
-                    if (Date.now() - root.lastEqUpdate < 2000) return;
+    Timer {
+        id: eqResyncTimer
+        repeat: false
+        onTriggered: eqStateFile.reload()
+    }
 
-                    var outStr = this.text.trim();
-                    if (outStr.length > 0) {
-                        try {
-                            var parsed = JSON.parse(outStr);
-                            root.eqData = parsed;
-                            if (!parsed.pending) {
-                                root.savedEqData = Object.assign({}, parsed);
-                            }
-                        } catch(e) {}
-                    }
-                }
-            }
-        }
+    Process {
+        id: eqInitProc
+        running: false
+        command: ["bash", "-c", Caching.qsDir + "/media/equalizer.sh get"]
+        onExited: eqStateFile.reload()
     }
 
     LyricsPicker {
@@ -1178,65 +1234,19 @@ Item {
                             opacity: root.introText
                             transform: Translate { x: root.s(25) * (1 - root.introText) }
                             
-                            Item {
-                                id: titleClipRect
+                            MarqueeText {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: root.s(25) 
-                                clip: true
+                                Layout.preferredHeight: root.s(25)
+                                text: (root.targetPlayer && root.targetPlayer.trackTitle !== "") ? root.targetPlayer.trackTitle : I18n.t("music.nothing_playing")
+                                color: root.dynamicTextColor
+                                font.family: ThemeBackend.fontFamily
+                                font.pixelSize: root.s(19)
+                                font.bold: true
+                                marqueeSpacing: root.s(50)
+                                speed: 25
+                                active: root.active
 
-                                property int marqueeSpacing: root.s(50)
-
-                                Item {
-                                    id: marqueeContainer
-                                    height: parent.height
-
-                                    Row {
-                                        spacing: titleClipRect.marqueeSpacing
-                                        Text {
-                                            id: titleTextMain
-                                            text: (root.targetPlayer && root.targetPlayer.trackTitle !== "") ? root.targetPlayer.trackTitle : I18n.t("music.nothing_playing")
-                                            color: root.dynamicTextColor
-                                            font.family: ThemeBackend.fontFamily
-                                            font.pixelSize: root.s(19)
-                                            font.bold: true
-                                            Behavior on color { ColorAnimation { duration: 600 } }
-
-                                            onTextChanged: {
-                                                marqueeContainer.x = 0;
-                                                if (implicitWidth > titleClipRect.width && root.active) {
-                                                    titleAnim.restart();
-                                                } else {
-                                                    titleAnim.stop();
-                                                }
-                                            }
-                                        }
-                                        Text {
-                                            id: titleTextClone
-                                            text: titleTextMain.text
-                                            color: root.dynamicTextColor
-                                            font.family: ThemeBackend.fontFamily
-                                            font.pixelSize: root.s(19)
-                                            font.bold: true
-                                            visible: titleTextMain.implicitWidth > titleClipRect.width
-                                        }
-                                    }
-
-                                    SequentialAnimation on x {
-                                        id: titleAnim
-                                        loops: Animation.Infinite
-                                        running: root.active && titleTextMain.implicitWidth > titleClipRect.width
-
-                                        PauseAnimation { duration: 3000 }
-                                        
-                                        NumberAnimation {
-                                            from: 0
-                                            to: -(titleTextMain.implicitWidth + titleClipRect.marqueeSpacing)
-                                            duration: (titleTextMain.implicitWidth + titleClipRect.marqueeSpacing) * 25
-                                        }
-                                        
-                                        PropertyAction { target: marqueeContainer; property: "x"; value: 0 }
-                                    }
-                                }
+                                Behavior on color { ColorAnimation { duration: 600 } }
                             }
 
                             Text {

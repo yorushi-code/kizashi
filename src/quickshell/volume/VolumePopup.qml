@@ -26,7 +26,16 @@ Item {
         else if (t === "app" || t === "apps" || t === "stream" || t === "streams") window.activeTab = "apps";
     }
 
+    property var exitCallback: null
+
+    function startExit(onFinished) {
+        introAnim.stop();
+        exitCallback = onFinished;
+        exitAnim.restart();
+    }
+
     function resetAndPlayIntro() {
+        exitAnim.stop();
         introMain = 0;
         introHeader = 0;
         introContent = 0;
@@ -47,6 +56,7 @@ Item {
             resetAndPlayIntro();
         } else {
             introAnim.stop();
+            exitAnim.stop();
             introMain = 0;
             introHeader = 0;
             introContent = 0;
@@ -142,6 +152,31 @@ Item {
         SequentialAnimation {
             PauseAnimation { duration: 200 }
             NumberAnimation { target: window; property: "introContent"; from: 0; to: 1.0; duration: 800; easing.type: Easing.OutExpo }
+        }
+    }
+
+    SequentialAnimation {
+        id: exitAnim
+        running: false
+        ParallelAnimation {
+            NumberAnimation { target: window; property: "introContent"; to: 0.0; duration: 150; easing.type: Easing.InCubic }
+            SequentialAnimation {
+                PauseAnimation { duration: 30 }
+                NumberAnimation { target: window; property: "introHeader"; to: 0.0; duration: 160; easing.type: Easing.InBack }
+            }
+            SequentialAnimation {
+                PauseAnimation { duration: 50 }
+                NumberAnimation { target: window; property: "introMain"; to: 0.0; duration: 180; easing.type: Easing.InQuart }
+            }
+        }
+        ScriptAction {
+            script: {
+                if (window.exitCallback) {
+                    let cb = window.exitCallback;
+                    window.exitCallback = null;
+                    cb();
+                }
+            }
         }
     }
 

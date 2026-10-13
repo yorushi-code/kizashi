@@ -569,7 +569,8 @@
         "pictures": "Bilder",
         "music": "Musik",
         "documents": "Dokumente"
-      }
+      },
+      "done": "Fertig"
     },
     "font_picker": {
       "title": "Schriftart auswählen",
@@ -840,6 +841,29 @@
       "smart_autohide": {
         "title": "Intelligentes automatisches Ausblenden",
         "desc": "Dock nur bei geöffneten Fenstern ausblenden, auf dem Desktop sichtbar lassen"
+      },
+      "focus_running": {
+        "title": "Bestehendes Fenster fokussieren",
+        "desc": "Klicken auf ein App-Symbol aktiviert das geöffnete Fenster, anstatt eine neue Instanz zu starten"
+      },
+      "show_running_indicators": {
+        "title": "Laufende Indikatoren",
+        "desc": "Punkt- oder Balkenindikatoren für geöffnete Anwendungssymbole anzeigen"
+      },
+      "show_running_apps": {
+        "title": "Geöffnete Anwendungen anzeigen",
+        "desc": "Nicht angeheftete geöffnete Anwendungen im Dock anzeigen"
+      },
+      "running_scope": {
+        "title": "Bereich aktiver Fenster",
+        "desc": "Laufende Fenster filtern, die im Dock angezeigt und gesteuert werden",
+        "auto": "Automatisch (Compositor-Standard)",
+        "all": "Alle Arbeitsflächen & Monitore",
+        "output": "Nur aktueller Monitor",
+        "workspace": "Nur aktive Arbeitsfläche"
+      },
+      "window_menu": {
+        "untitled": "Untitled"
       }
     },
     "lyrics_picker": {
@@ -982,7 +1006,8 @@
     },
     "actions": {
       "unpair": "Entkoppeln",
-      "scan": "Suchen"
+      "scan": "Suchen",
+      "sign_in": "Anmelden"
     }
   },
   "notifications": {
@@ -1050,6 +1075,7 @@
       }
     },
     "draw": {
+      "hex": "Hex",
       "notification": {
         "app_name": "DrawAction",
         "saved_title": "Zeichnung gespeichert",
@@ -1057,7 +1083,9 @@
         "copied_body": "Zeichnung in die Zwischenablage kopiert",
         "failed_title": "Export fehlgeschlagen",
         "failed_body": "Zeichnung konnte nicht gespeichert werden"
-      }
+      },
+      "palette": "Palette",
+      "palette_default": "Standard"
     },
     "notes": {
       "title": "Notizen",
