@@ -25,7 +25,10 @@ PanelWindow {
         return false;
     }
 
-    visible: (!popupWindow.dndEnabled || popupWindow.hasCriticalPopup) && !NotificationManager.sysPanelOpen && NotificationManager.activePopupsModel.count > 0
+    // A game owning the screen holds popups back (they stay in the history);
+    // critical ones still show.
+    readonly property bool heldForGame: GameGuard.owns(popupWindow.screen) && !popupWindow.hasCriticalPopup
+    visible: (!popupWindow.dndEnabled || popupWindow.hasCriticalPopup) && !heldForGame && !NotificationManager.sysPanelOpen && NotificationManager.activePopupsModel.count > 0
 
     function storeNotif(uid, notif) {
         NotificationManager.liveNotifs[uid] = notif;
