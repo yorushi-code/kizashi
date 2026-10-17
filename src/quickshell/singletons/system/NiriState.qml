@@ -190,6 +190,16 @@ Item {
                 delete wCopy[p.id];
                 _windows = wCopy;
             }
+        } else if ((p = ev.WindowLayoutsChanged)) {
+            // A window resized (a game going fullscreen does only this).
+            let wCopy = Object.assign({}, _windows);
+            let changes = p.changes || [];
+            for (let i = 0; i < changes.length; i++) {
+                let c = changes[i];
+                if (!c || c.length < 2 || !wCopy[c[0]]) continue;
+                wCopy[c[0]] = Object.assign({}, wCopy[c[0]], { layout: c[1] });
+            }
+            _windows = wCopy;
         } else if ((p = ev.WindowFocusChanged)) {
             let focusedId = (p.id !== undefined && p.id !== null) ? Number(p.id) : -1;
             let wCopy = Object.assign({}, _windows);
