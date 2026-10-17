@@ -82,41 +82,9 @@ Variants {
             property real leftBound: barPosition === "left" ? barInset : 0
             property real rightBound: floatingWidget.width - (barPosition === "right" ? barInset : 0)
 
-            // The edges stay dead while something owns the whole screen - a
-            // fullscreen window, a borderless one covering the output (how
-            // Proton/Wine games usually run under XWayland, where the
-            // fullscreen flag never reaches us), or a Steam/Proton game in focus.
-            readonly property var activeToplevel: ToplevelManager.activeToplevel
-            readonly property bool toplevelFullscreen: {
-                let t = activeToplevel;
-                if (!t || !t.fullscreen) return false;
-                return !t.screens || t.screens.length === 0 || t.screens.indexOf(floatingWidget.screen) !== -1;
-            }
-            readonly property var niriFocused: {
-                let m = (typeof NiriState !== "undefined") ? NiriState.windowsMap : null;
-                if (!m) return null;
-                for (let id in m) {
-                    if (m[id] && m[id].is_focused) return m[id];
-                }
-                return null;
-            }
-            readonly property bool niriFocusedOnThisScreen: {
-                let w = niriFocused;
-                if (!w || typeof NiriState === "undefined") return false;
-                let ws = NiriState.workspacesMap ? NiriState.workspacesMap[w.workspace_id] : null;
-                return !ws || !ws.output || !floatingWidget.screen || ws.output === floatingWidget.screen.name;
-            }
-            readonly property bool focusedCoversScreen: {
-                let w = niriFocused;
-                if (!w || !w.layout || !w.layout.window_size || !niriFocusedOnThisScreen) return false;
-                let sz = w.layout.window_size;
-                return sz[0] >= floatingWidget.width - 2 && sz[1] >= floatingWidget.height - 2;
-            }
-            readonly property string focusedAppId: (niriFocused && niriFocused.app_id) ? String(niriFocused.app_id)
-                                                  : ((activeToplevel && activeToplevel.appId) ? String(activeToplevel.appId) : "")
-            readonly property bool focusedIsGame: niriFocusedOnThisScreen
-                                                  && /^(steam_app_\d+|gamescope|steam_proton)$|\.exe$/i.test(focusedAppId)
-            readonly property bool edgesSuppressed: toplevelFullscreen || focusedCoversScreen || focusedIsGame
+            // The edges stay dead while something owns this screen: a fullscreen
+            // or screen-filling window, or a Steam/Proton game in focus.
+            readonly property bool edgesSuppressed: GameGuard.owns(floatingWidget.screen)
 
             onEdgesSuppressedChanged: {
                 if (edgesSuppressed && !isPinned) {
@@ -124,9 +92,6 @@ Variants {
                     if (isPeekVisible || isSidebarVisible) peekHideTimer.restart();
                 }
             }
-
-            Component.onCompleted: { if (typeof NiriState !== "undefined" && NiriState.isNiri) NiriState.subscribe(); }
-            Component.onDestruction: { if (typeof NiriState !== "undefined" && NiriState.isNiri) NiriState.unsubscribe(); }
 
             property real edgeHitSize: edgesSuppressed ? 0 : Math.max(2, Math.round(s(3)))
 

@@ -35,6 +35,7 @@ Variants {
 
             property var activeToplevel: ToplevelManager.activeToplevel
             property bool isFullscreenActive: {
+                if (GameGuard.covers(barWindow.screen)) return true;
                 if (!activeToplevel || !activeToplevel.fullscreen) return false;
                 if (activeToplevel.screens && activeToplevel.screens.length > 0) {
                     return activeToplevel.screens.indexOf(barWindow.screen) !== -1;

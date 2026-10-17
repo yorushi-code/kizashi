@@ -674,6 +674,7 @@ Variants {
                     return false;
                 }
                 readonly property bool isFullscreenActive: isOsdFullscreen || isToplevelFullscreen || isHyprlandFullscreen
+                                                            || GameGuard.covers(dockWindow.screen)
 
                 readonly property bool isBarEffectivelyHidden: barAutohide || isFullscreenActive
                 readonly property bool sameSideAsBar: (dockPosition === barPosition) && !isBarEffectivelyHidden
