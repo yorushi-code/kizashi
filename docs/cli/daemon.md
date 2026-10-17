@@ -36,3 +36,4 @@ Compositor autostart examples:
 - Hyprland (`config/autostart.lua`): `hl.exec_cmd("kizashid start")`
 - Niri (`config/autostart.kdl`): `spawn-at-startup "kizashid" "start"`
 - Sway (`configDir/autostart`): `exec kizashid start`
+- Mango (`config/autostart.conf`): `exec_once=kizashid start`

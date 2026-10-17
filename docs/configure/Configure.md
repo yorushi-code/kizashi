@@ -67,6 +67,8 @@ The configuration file is located at `~/.config/kizashi/settings.json` (or `${XD
 | `theme.borderRadius` | `number` | `10` | Global corner radius in pixels (`0` to `24`). |
 | `theme.activePreset` | `string` | `"Matugen"` | Active color palette preset name (e.g., `"Matugen"`, `"Catppuccin Mocha"`, `"Tokyo Night"`, `"Nord"`). |
 | `theme.matugen` | `boolean` | `true` | Enables automatic Material You color extraction from the current wallpaper. |
+| `theme.mode` | `string` | `"dark"` | Color scheme mode used for Material You generation: `"dark"` or `"light"`. |
+| `theme.schemeType` | `string` | `"scheme-tonal-spot"` | Matugen scheme type used for Material You generation (e.g., `"scheme-tonal-spot"`). |
 | `theme.colors` | `object` | `{}` | Custom hex color overrides for palette roles (`base`, `surface0`, `surface1`, `surface2`, `text`, `mauve`, `blue`, `sapphire`, `green`, `peach`, `red`, `crust`, `mantle`). |
 | `wallpaperDir` | `string` | `"~/Pictures/Wallpapers"` | Directory scanned for desktop wallpapers in the wallpaper selector. |
 
@@ -74,7 +76,8 @@ The configuration file is located at `~/.config/kizashi/settings.json` (or `${XD
 
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `display.monitors.<name>.enabled` | `boolean` | `true` | Output power state toggled via compositor IPC (Hyprland, Sway, Niri). |
+| `display.monitors.<name>.enabled` | `boolean` | `true` | Output power state toggled via compositor IPC (Hyprland, Sway, Niri, Mango). |
+| `display.monitors.<name>.powerEnabled` | `boolean` | `true` | Whether the monitor output is powered on. |
 | `display.monitors.<name>.scale` | `number` | `1.0` | Output scaling factor (e.g., `1.0`, `1.25`, `1.5`, `2.0`). |
 | `display.monitors.<name>.auto` | `boolean` | `false` | Automatically calculates night-light color temperature from local sunrise and sunset. |
 | `display.monitors.<name>.temperature` | `number` | `50` | Night light warmth level (`0` to `100`). |
@@ -90,10 +93,11 @@ The configuration file is located at `~/.config/kizashi/settings.json` (or `${XD
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `bar.position` | `string` | `"top"` | Screen edge where the bar attaches: `"top"`, `"bottom"`, `"left"`, or `"right"`. |
-| `bar.width` | `number` | `100` | Bar length percentage (`10` to `100`). Values below 100 render a floating dock-style bar. |
+| `bar.width` | `number` | `100` | Bar length percentage (`10` to `100`). Values below 100 render a floating dock-style bar, or in `"fill"` style a bar that rounds down into the screen edge. |
 | `bar.opacity` | `number` | `100` | Background opacity percentage (`0` to `100`). |
 | `bar.style` | `string` | `"modular"` | Visual bar style: `"modular"`, `"fill"`, or `"solid"`. |
 | `bar.distinctPills` | `boolean` | `false` | Renders each module inside an isolated, detached capsule pill. |
+| `bar.centerByEdges` | `boolean` | `true` | Keeps equal margins on both ends of the bar (left and right, or top and bottom for a vertical bar) instead of centering by the middle module. |
 | `bar.autohide` | `boolean` | `false` | Automatically hides the bar until cursor enters the screen trigger area. |
 | `bar.autohideTimeout` | `number` | `1000` | Delay in milliseconds before hiding the bar after cursor leaves. |
 | `bar.workspaceCount` | `number` | `8` | Total number of persistent workspace indicators displayed. |
@@ -112,7 +116,7 @@ The configuration file is located at `~/.config/kizashi/settings.json` (or `${XD
 | `bar.time.format` | `string` | `"HH:mm:ss"` | Qt time format pattern string (e.g., `"HH:mm:ss"`, `"HH:mm"`, `"hh:mm AP"`). |
 | `bar.timeShowDate` | `boolean` | `true` | Shows calendar date beside time. |
 | `bar.visBarCount` | `number` | `16` | Number of spectrum frequency bars rendered (`4` to `32`). |
-| `bar.visAlignment` | `string` | `"center"` | Visualizer spectrum alignment: `"center"`, `"left"`, or `"right"`. |
+| `bar.visAlignment` | `string` | `"center"` | Visualizer spectrum alignment: `"center"`, `"top"`, `"bottom"`, `"left"`, or `"right"`. |
 | `bar.visContinuous` | `boolean` | `false` | Renders a continuous waveform line instead of discrete frequency bars. |
 | `bar.sysmonStyle` | `string` | `"wave"` | Resource monitor style: `"wave"`, `"circle"`, or `"bars"`. |
 | `bar.sysmonStats` | `array` | `["cpu", "ram", "temp"]` | Monitored resource metrics: subset of `["cpu", "ram", "temp", "disk"]`. |
@@ -130,6 +134,10 @@ The configuration file is located at `~/.config/kizashi/settings.json` (or `${XD
 | `bar.volShowPercent` | `boolean` | `true` | Displays numeric volume percentage. |
 | `bar.kbStyle` | `string` | `"button"` | Keyboard layout module visual style: `"button"` or `"text"`. |
 | `bar.kbShowIcon` | `boolean` | `true` | Displays keyboard glyph. |
+| `bar.mediaInfoMode` | `string` | `"duration"` | Secondary line of the media module: `"duration"` or `"author"` (top and bottom bars). |
+| `bar.mediaWidth` | `integer` | `120` | Width of the media text area in pixels (top and bottom bars). |
+| `bar.mediaShowIcon` | `boolean` | `true` | Displays album art or music icon. |
+| `bar.mediaShowControls` | `boolean` | `true` | Displays previous, play and next buttons. |
 
 ### Launcher
 
@@ -157,6 +165,7 @@ The configuration file is located at `~/.config/kizashi/settings.json` (or `${XD
 | `dock.autohide` | `boolean` | `false` | Hides the dock until hovered. |
 | `dock.smartAutohide` | `boolean` | `true` | Automatically hides the dock only when a window overlaps its area (intellihide). |
 | `dock.autohideTimeout` | `number` | `1000` | Delay in milliseconds before hiding. |
+| `dock.overrideBoundsCorrection` | `boolean` | `false` | Keeps the custom element size even if the dock exceeds the screen limits. |
 | `dock.enableScrolling` | `boolean` | `false` | Enables mouse wheel scrolling when items exceed visible count. |
 | `dock.visibleElements` | `number` | `7` | Maximum number of visible icons when scrolling is enabled. |
 | `dock.focusRunning` | `boolean` | `true` | Clicking a running application raises and focuses its existing window. |
@@ -194,12 +203,13 @@ The configuration file is located at `~/.config/kizashi/settings.json` (or `${XD
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `idle.enabled` | `boolean` | `true` | Master toggle for the idle power management subsystem. |
+| `idle.lockOnSleep` | `boolean` | `true` | Locks the session before the system suspends for any reason, such as closing the lid. Requires `python-jeepney` and systemd-logind. |
 | `idle.manualInhibit` | `boolean` | `false` | Caffeine mode; suppresses all automated idle timeouts. |
 | `idle.actions.dim` | `object` | `{...}` | Screen dim action (`timeout`: seconds, `enabled`: boolean, `respectInhibitors`: boolean, `mprisInhibit`: boolean, `warningTimeout`: seconds, `beforeCommand`: string, `resumeCommand`: string). |
 | `idle.actions.lock` | `object` | `{...}` | Session lock action (`timeout`: seconds, `enabled`: boolean, `respectInhibitors`: boolean, `mprisInhibit`: boolean, `warningTimeout`: seconds, `warningCommand`: string). |
 | `idle.actions.dpms` | `object` | `{...}` | Display power off (DPMS) action (`timeout`: seconds, `enabled`: boolean, `respectInhibitors`: boolean, `mprisInhibit`: boolean). |
 | `idle.actions.suspend` | `object` | `{...}` | System suspend action (`timeout`: seconds, `enabled`: boolean, `respectInhibitors`: boolean, `mprisInhibit`: boolean). |
-| `idle.customActions` | `array` | `[]` | User-defined custom idle actions with custom triggers and execution commands. |
+| `idle.customActions` | `array` | `[]` | User-defined custom idle actions. Each entry accepts `id`, `name`, `desc`, `enabled`, `timeout`, `respectInhibitors`, `mprisInhibit`, `command`, `beforeCommand`, `resumeCommand`, `warningTimeout` and `warningCommand`. |
 
 ### Inputs
 

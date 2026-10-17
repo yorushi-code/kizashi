@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import "../"
+import "../reusables"
 
 Variants {
     model: Quickshell.screens
@@ -1077,8 +1078,14 @@ Variants {
                 height: (floatingWidget.activeEdge === "bottom" || floatingWidget.activeEdge === "top") ? floatingWidget.s(11) : peekBarLength
                 radius: Math.min(floatingWidget.containerRadius, Math.min(width, height) / 2)
 
-                color: Qt.rgba(ThemeBackend.base.r, ThemeBackend.base.g, ThemeBackend.base.b, 1.0)
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                 border.width: 0
+
+                WallpaperBlur {
+                    z: -1
+                    anchors.fill: parent
+                    radius: parent.radius
+                }
 
                 opacity: 1.0
                 scale: floatingWidget.isPeekVisible ? 1.0 : 0.6
@@ -1231,26 +1238,26 @@ Variants {
                     }
 
                     ShaderEffect {
-                        visible: floatingWidget.outerCornerRadius > 0.5
+                        visible: floatingWidget.outerCornerRadius > 0.5 && !ThemeBackend.liquidGlass
                         x: 0
                         y: -floatingWidget.outerCornerRadius
                         width: floatingWidget.outerCornerRadius
                         height: floatingWidget.outerCornerRadius
                         property vector2d itemSize: Qt.vector2d(width, height)
                         property real cornerIndex: 2.0
-                        property color color: Qt.rgba(ThemeBackend.base.r, ThemeBackend.base.g, ThemeBackend.base.b, 0.95)
+                        property color color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                         fragmentShader: "file://" + Caching.kizashiDir + "/assets/shaders/ui/corner_cutout.frag.qsb"
                     }
 
                     ShaderEffect {
-                        visible: floatingWidget.outerCornerRadius > 0.5
+                        visible: floatingWidget.outerCornerRadius > 0.5 && !ThemeBackend.liquidGlass
                         x: 0
                         y: parent.height
                         width: floatingWidget.outerCornerRadius
                         height: floatingWidget.outerCornerRadius
                         property vector2d itemSize: Qt.vector2d(width, height)
                         property real cornerIndex: 0.0
-                        property color color: Qt.rgba(ThemeBackend.base.r, ThemeBackend.base.g, ThemeBackend.base.b, 0.95)
+                        property color color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                         fragmentShader: "file://" + Caching.kizashiDir + "/assets/shaders/ui/corner_cutout.frag.qsb"
                     }
                     Rectangle {
@@ -1264,8 +1271,17 @@ Variants {
                         bottomLeftRadius: 0
                         topRightRadius: floatingWidget.containerRadius
                         bottomRightRadius: floatingWidget.containerRadius
-                        color: Qt.rgba(ThemeBackend.base.r, ThemeBackend.base.g, ThemeBackend.base.b, 1.0)
+                        color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                         border.width: 0
+
+                        WallpaperBlur {
+                            z: -1
+                            anchors.fill: parent
+                            topLeftRadius: parent.topLeftRadius
+                            topRightRadius: parent.topRightRadius
+                            bottomLeftRadius: parent.bottomLeftRadius
+                            bottomRightRadius: parent.bottomRightRadius
+                        }
 
                         MouseArea {
                             id: sidebarDragArea
@@ -1305,10 +1321,18 @@ Variants {
 
                         component EmptyBlock : Rectangle {
                             radius: Math.min(floatingWidget.s(10), Math.min(width, height) / 2)
-                            color: Qt.rgba(ThemeBackend.text.r, ThemeBackend.text.g, ThemeBackend.text.b, 0.05)
+                            color: blockGlass.active ? "transparent" : Qt.rgba(ThemeBackend.text.r, ThemeBackend.text.g, ThemeBackend.text.b, 0.05)
                             border.width: 0
                             border.color: Qt.rgba(ThemeBackend.text.r, ThemeBackend.text.g, ThemeBackend.text.b, 0.08)
                             clip: true
+
+                            GlassFill {
+                                id: blockGlass
+                                anchors.fill: parent
+                                radius: parent.radius
+                                tintColor: ThemeBackend.surface0
+                                tintAmount: 0.25
+                            }
                         }
 
                         Item {
@@ -1602,7 +1626,17 @@ Variants {
                                 width: parent.width
                                 z: 0
                                 radius: width / 2
-                                color: ThemeBackend.mauve
+                                color: highlightGlass.active ? "transparent" : ThemeBackend.mauve
+
+                                GlassFill {
+                                    id: highlightGlass
+                                    anchors.fill: parent
+                                    radius: parent.radius
+                                    tintColor: ThemeBackend.mauve
+                                    tintAmount: 0.5
+                                    shadow: 1
+                                    press: 0.3
+                                }
 
                                 property int prevIdx: 0
                                 property int curIdx: floatingWidget.activeIndex
@@ -1687,7 +1721,7 @@ Variants {
                                             font.family: ThemeBackend.fontFamily
                                             font.pixelSize: floatingWidget.s(10)
                                             font.weight: Font.Bold
-                                            color: ThemeBackend.crust
+                                            color: highlightGlass.active ? ThemeBackend.text : ThemeBackend.crust
                                             rotation: (floatingWidget.activeEdge === "right" || floatingWidget.activeEdge === "bottom") ? 90 : -90
                                         }
                                     }

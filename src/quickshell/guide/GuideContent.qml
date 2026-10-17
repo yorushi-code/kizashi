@@ -70,7 +70,9 @@ Item {
                     });
                 }
 
-                Component.onCompleted: ensureLoaded()
+                Component.onCompleted: {
+                    if (popup.currentTab === tabContentWrapper.parentTabIndex) ensureLoaded();
+                }
 
                 Connections {
                     target: popup
@@ -148,7 +150,9 @@ Item {
                         });
                     }
 
-                    Component.onCompleted: ensureLoaded()
+                    Component.onCompleted: {
+                        if (isSubCurrent) ensureLoaded();
+                    }
 
                     Connections {
                         target: popup

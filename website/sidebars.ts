@@ -3,13 +3,14 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
   tutorialSidebar: [
     'Overview',
+    'installation/installation',
     {
       type: 'category',
-      label: 'Installation',
+      label: 'NixOS',
       collapsible: false,
       items: [
-        'installation/arch',
-        'installation/nixos',
+        'installation/nixos/flake',
+        'installation/nixos/home-manager',
       ],
     },
     {
@@ -26,6 +27,7 @@ const sidebars: SidebarsConfig = {
             'configure/compositors/hyprland',
             'configure/compositors/niri',
             'configure/compositors/sway',
+            'configure/compositors/mango',
           ],
         },
       ],

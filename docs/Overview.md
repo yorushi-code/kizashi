@@ -20,10 +20,11 @@ Compositor guides:
 - [Hyprland](./configure/compositors/hyprland.md)
 - [Niri](./configure/compositors/niri.md)
 - [Sway](./configure/compositors/sway.md)
+- [Mango](./configure/compositors/mango.md)
 
 ## Installation
 
 Choose your operating system to get started:
 
-- [Arch Linux and derivatives](./installation/arch.md)
-- [NixOS](./installation/nixos.md)
+- [Arch Linux, Fedora, and derivatives](./installation/installation.md)
+- [NixOS](./installation/nixos/flake.md)

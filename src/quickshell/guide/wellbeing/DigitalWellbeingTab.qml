@@ -13,6 +13,11 @@ Item {
     required property var rootObj
     required property int tabIndex
 
+    readonly property color textMain: ThemeBackend.liquidGlass ? "#ffffff" : ThemeBackend.text
+    readonly property color textSub: ThemeBackend.liquidGlass ? "#ffffff" : ThemeBackend.subtext0
+    readonly property color textDim: ThemeBackend.liquidGlass ? "#ffffff" : ThemeBackend.overlay0
+    readonly property color textAccent: ThemeBackend.liquidGlass ? "#ffffff" : ThemeBackend.mauve
+
     anchors.fill: parent
     visible: rootObj.currentTab === tabIndex
     opacity: visible ? 1.0 : 0.0
@@ -459,9 +464,8 @@ Item {
                     cornerRadius: ThemeBackend.borderRadius
                     buttonIcon: "󰒓"
                     iconFontSize: rootObj.s(16)
-                    iconOffsetX: -1
                     accentColor: ThemeBackend.surface0
-                    textColor: isHoveredOrHighlighted ? ThemeBackend.text : ThemeBackend.overlay0
+                    textColor: ThemeBackend.liquidGlass ? "#ffffff" : (isHoveredOrHighlighted ? ThemeBackend.text : ThemeBackend.overlay0)
                     onClicked: tabRoot.isSettingsView = !tabRoot.isSettingsView
                 }
 
@@ -476,7 +480,7 @@ Item {
                         buttonIcon: "󰁍"
                         iconFontSize: rootObj.s(16)
                         accentColor: ThemeBackend.surface0
-                        textColor: isHoveredOrHighlighted ? ThemeBackend.text : ThemeBackend.overlay0
+                        textColor: ThemeBackend.liquidGlass ? "#ffffff" : (isHoveredOrHighlighted ? ThemeBackend.text : ThemeBackend.overlay0)
                         opacity: (tabRoot.selectedAppClass !== "" || tabRoot.isWeekView || tabRoot.isSettingsView) ? 1.0 : 0.0
                         visible: opacity > 0
                         Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.OutQuint } }
@@ -500,9 +504,8 @@ Item {
                         cornerRadius: ThemeBackend.borderRadius
                         buttonIcon: "󰃭"
                         iconFontSize: rootObj.s(16)
-                        iconOffsetX: -1
                         accentColor: ThemeBackend.surface0
-                        textColor: isHoveredOrHighlighted ? ThemeBackend.text : ThemeBackend.overlay0
+                        textColor: ThemeBackend.liquidGlass ? "#ffffff" : (isHoveredOrHighlighted ? ThemeBackend.text : ThemeBackend.overlay0)
                         opacity: (tabRoot.selectedAppClass === "" && !tabRoot.isWeekView && !tabRoot.isSettingsView) ? 1.0 : 0.0
                         visible: opacity > 0
                         Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.OutQuint } }
@@ -518,7 +521,7 @@ Item {
                     buttonIcon: "󰅁"
                     iconFontSize: rootObj.s(16)
                     accentColor: ThemeBackend.surface0
-                    textColor: isHoveredOrHighlighted ? ThemeBackend.text : ThemeBackend.overlay0
+                    textColor: ThemeBackend.liquidGlass ? "#ffffff" : (isHoveredOrHighlighted ? ThemeBackend.text : ThemeBackend.overlay0)
                     onClicked: changeDay(tabRoot.isWeekView ? -7 : -1)
                     opacity: tabRoot.isSettingsView ? 0.0 : 1.0
                     visible: opacity > 0
@@ -555,7 +558,7 @@ Item {
                     font.family: ThemeBackend.fontFamily
                     font.weight: Font.DemiBold
                     font.pixelSize: rootObj.s(17)
-                    color: ThemeBackend.text
+                    color: tabRoot.textMain
                     text: tabRoot.isSettingsView ? I18n.t("guide.wellbeing.settings.title") : (tabRoot.isWeekView ? (tabRoot.weekRangeStr !== "" ? tabRoot.weekRangeStr : I18n.t("guide.wellbeing.week_overview")) : (tabRoot.selectedAppClass !== "" ? `${tabRoot.selectedAppName} - ${tabRoot.getFancyDate(tabRoot.activeDate)}` : tabRoot.getFancyDate(tabRoot.activeDate)))
                 }
 
@@ -574,7 +577,7 @@ Item {
                     buttonIcon: "󰅂"
                     iconFontSize: rootObj.s(16)
                     accentColor: ThemeBackend.surface0
-                    textColor: isHoveredOrHighlighted ? ThemeBackend.text : ThemeBackend.overlay0
+                    textColor: ThemeBackend.liquidGlass ? "#ffffff" : (isHoveredOrHighlighted ? ThemeBackend.text : ThemeBackend.overlay0)
                     onClicked: changeDay(tabRoot.isWeekView ? 7 : 1)
                     opacity: tabRoot.isSettingsView ? 0.0 : 1.0
                     visible: opacity > 0
@@ -611,9 +614,17 @@ Item {
                         Layout.fillHeight: true
                         Layout.preferredWidth: rootObj.s(190)
                         radius: ThemeBackend.borderRadius
-                        color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                        color: gf1.active ? "transparent" : Qt.alpha(ThemeBackend.surface0, 0.4)
+
+                        GlassFill {
+                            id: gf1
+                            anchors.fill: parent
+                            radius: parent.radius
+                            tintColor: Qt.alpha(ThemeBackend.surface0, 0.4)
+                            tintAmount: 0.25
+                        }
                         border.color: Qt.alpha(ThemeBackend.surface1, 0.3)
-                        border.width: 1
+                        border.width: ThemeBackend.liquidGlass ? 0 : 1
 
                         RowLayout {
                             anchors.fill: parent
@@ -639,7 +650,7 @@ Item {
                                 font.family: ThemeBackend.fontFamily
                                 font.weight: Font.Bold
                                 font.pixelSize: rootObj.s(20)
-                                color: ThemeBackend.text
+                                color: tabRoot.textMain
                                 text: tabRoot.formatTimeList(tabRoot.averageSeconds)
                             }
 
@@ -652,7 +663,7 @@ Item {
                                     font.family: ThemeBackend.fontFamily
                                     font.weight: Font.DemiBold
                                     font.pixelSize: rootObj.s(12)
-                                    color: ThemeBackend.subtext0
+                                    color: tabRoot.textSub
                                     text: I18n.t("guide.wellbeing.daily_average")
                                     elide: Text.ElideRight
                                 }
@@ -661,7 +672,7 @@ Item {
                                     font.family: ThemeBackend.fontFamily
                                     font.weight: Font.Medium
                                     font.pixelSize: rootObj.s(11)
-                                    color: ThemeBackend.overlay0
+                                    color: tabRoot.textDim
                                     text: tabRoot.weekRangeStr
                                     visible: tabRoot.weekRangeStr !== ""
                                     elide: Text.ElideRight
@@ -675,16 +686,24 @@ Item {
                         Layout.fillHeight: true
                         Layout.preferredWidth: rootObj.s(260)
                         radius: ThemeBackend.borderRadius
-                        color: Qt.alpha(ThemeBackend.surface0, 0.5)
+                        color: gf2.active ? "transparent" : Qt.alpha(ThemeBackend.surface0, 0.5)
+
+                        GlassFill {
+                            id: gf2
+                            anchors.fill: parent
+                            radius: parent.radius
+                            tintColor: Qt.alpha(ThemeBackend.surface0, 0.5)
+                            tintAmount: 0.25
+                        }
                         border.color: Qt.alpha(ThemeBackend.surface1, 0.4)
-                        border.width: 1
+                        border.width: ThemeBackend.liquidGlass ? 0 : 1
 
                         Text {
                             anchors.centerIn: parent
                             font.family: ThemeBackend.fontFamily
                             font.weight: Font.Black
                             font.pixelSize: rootObj.s(30)
-                            color: ThemeBackend.text
+                            color: tabRoot.textMain
                             text: tabRoot.formatTimeLarge(tabRoot.animatedTotalSeconds)
                         }
                     }
@@ -694,9 +713,17 @@ Item {
                         Layout.fillHeight: true
                         Layout.preferredWidth: rootObj.s(190)
                         radius: ThemeBackend.borderRadius
-                        color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                        color: gf3.active ? "transparent" : Qt.alpha(ThemeBackend.surface0, 0.4)
+
+                        GlassFill {
+                            id: gf3
+                            anchors.fill: parent
+                            radius: parent.radius
+                            tintColor: Qt.alpha(ThemeBackend.surface0, 0.4)
+                            tintAmount: 0.25
+                        }
                         border.color: Qt.alpha(ThemeBackend.surface1, 0.3)
-                        border.width: 1
+                        border.width: ThemeBackend.liquidGlass ? 0 : 1
 
                         RowLayout {
                             anchors.fill: parent
@@ -737,6 +764,7 @@ Item {
                                         font.weight: Font.Bold
                                         font.pixelSize: rootObj.s(20)
                                         color: {
+                                            if (ThemeBackend.liquidGlass) return "#ffffff";
                                             let diff = tabRoot.totalSeconds - tabRoot.yesterdaySeconds;
                                             return diff > 0 ? ThemeBackend.peach : ThemeBackend.green;
                                         }
@@ -748,7 +776,7 @@ Item {
                                     font.family: ThemeBackend.fontFamily
                                     font.weight: Font.DemiBold
                                     font.pixelSize: rootObj.s(13)
-                                    color: ThemeBackend.overlay0
+                                    color: tabRoot.textDim
                                     text: (tabRoot.totalSeconds === 0 && tabRoot.yesterdaySeconds === 0) ? I18n.t("guide.wellbeing.no_data") : I18n.t("guide.wellbeing.same_time")
                                     visible: (tabRoot.totalSeconds === 0 && tabRoot.yesterdaySeconds === 0) || tabRoot.totalSeconds === tabRoot.yesterdaySeconds
                                     elide: Text.ElideRight
@@ -770,9 +798,17 @@ Item {
                         Layout.fillHeight: true
                         Layout.preferredWidth: rootObj.s(440)
                         radius: ThemeBackend.borderRadius
-                        color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                        color: gf4.active ? "transparent" : Qt.alpha(ThemeBackend.surface0, 0.4)
+
+                        GlassFill {
+                            id: gf4
+                            anchors.fill: parent
+                            radius: parent.radius
+                            tintColor: Qt.alpha(ThemeBackend.surface0, 0.4)
+                            tintAmount: 0.25
+                        }
                         border.color: Qt.alpha(ThemeBackend.surface1, 0.3)
-                        border.width: 1
+                        border.width: ThemeBackend.liquidGlass ? 0 : 1
 
                         opacity: introMidLeft
                         transform: Translate { x: rootObj.s(-30) * (1 - introMidLeft) }
@@ -812,7 +848,7 @@ Item {
                                             anchors.fill: parent
                                             radius: rootObj.s(3)
                                             color: ThemeBackend.surface2
-                                            visible: !model.isTarget
+                                            visible: !model.isTarget && !weekBarGlass.active
                                             opacity: barMa.containsMouse ? 0.7 : 1.0
                                             Behavior on color { ColorAnimation { duration: 400; easing.type: Easing.OutCubic } }
                                         }
@@ -820,12 +856,23 @@ Item {
                                         Rectangle {
                                             anchors.fill: parent
                                             radius: rootObj.s(3)
-                                            visible: model.isTarget
+                                            visible: model.isTarget && !weekBarGlass.active
                                             opacity: barMa.containsMouse ? 0.7 : 1.0
                                             gradient: Gradient {
                                                 GradientStop { position: 0.0; color: ThemeBackend.mauve }
                                                 GradientStop { position: 1.0; color: ThemeBackend.blue }
                                             }
+                                        }
+
+                                        GlassFill {
+                                            id: weekBarGlass
+                                            anchors.fill: parent
+                                            radius: rootObj.s(3)
+                                            forceClear: model.isTarget
+                                            tintColor: model.isTarget ? ThemeBackend.mauve : ThemeBackend.surface2
+                                            tintAmount: model.isTarget ? 0.6 : 0.22
+                                            tintStrength: 1.0
+                                            opacity: barMa.containsMouse ? 0.7 : 1.0
                                         }
                                     }
 
@@ -836,7 +883,7 @@ Item {
                                         font.family: ThemeBackend.fontFamily
                                         font.weight: Font.DemiBold
                                         font.pixelSize: rootObj.s(11)
-                                        color: model.isTarget ? ThemeBackend.text : ThemeBackend.overlay0
+                                        color: ThemeBackend.liquidGlass ? "#ffffff" : (model.isTarget ? ThemeBackend.text : ThemeBackend.overlay0)
                                         text: model.dayName
                                         Behavior on color { ColorAnimation { duration: 400 } }
                                     }
@@ -850,9 +897,17 @@ Item {
                         Layout.fillHeight: true
                         Layout.preferredWidth: rootObj.s(260)
                         radius: ThemeBackend.borderRadius
-                        color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                        color: gf5.active ? "transparent" : Qt.alpha(ThemeBackend.surface0, 0.4)
+
+                        GlassFill {
+                            id: gf5
+                            anchors.fill: parent
+                            radius: parent.radius
+                            tintColor: Qt.alpha(ThemeBackend.surface0, 0.4)
+                            tintAmount: 0.25
+                        }
                         border.color: Qt.alpha(ThemeBackend.surface1, 0.3)
-                        border.width: 1
+                        border.width: ThemeBackend.liquidGlass ? 0 : 1
 
                         opacity: introMidRight
                         transform: Translate { x: rootObj.s(30) * (1 - introMidRight) }
@@ -875,14 +930,14 @@ Item {
                                     buttonIcon: "󰃭"
                                     iconFontSize: rootObj.s(12)
                                     accentColor: ThemeBackend.surface0
-                                    textColor: ThemeBackend.mauve
+                                    textColor: tabRoot.textAccent
                                 }
 
                                 Text {
                                     font.family: ThemeBackend.fontFamily
                                     font.weight: Font.DemiBold
                                     font.pixelSize: rootObj.s(13)
-                                    color: ThemeBackend.text
+                                    color: tabRoot.textMain
                                     text: tabRoot.monthNames[tabRoot.activeDate.getMonth()]
                                 }
                             }
@@ -899,12 +954,31 @@ Item {
                                         width: rootObj.s(16)
                                         height: rootObj.s(16)
                                         radius: rootObj.s(3)
-                                        color: model.total === -1 ? "transparent" : (model.total === 0 ? ThemeBackend.surface2 : Qt.rgba(ThemeBackend.mauve.r, ThemeBackend.mauve.g, ThemeBackend.mauve.b, Math.min(1.0, 0.3 + 0.7 * (model.total / tabRoot.maxMonthTotal))))
+                                        property real intensity: Math.min(1.0, 0.3 + 0.7 * (model.total / tabRoot.maxMonthTotal))
+                                        color: monthGlass.active || model.total === -1 ? "transparent" : (model.total === 0 ? ThemeBackend.surface2 : Qt.rgba(ThemeBackend.mauve.r, ThemeBackend.mauve.g, ThemeBackend.mauve.b, intensity))
                                         Behavior on color { ColorAnimation { duration: 700; easing.type: Easing.OutQuint } }
 
                                         border.color: model.isTarget ? ThemeBackend.text : "transparent"
-                                        border.width: model.isTarget ? 1 : 0
+                                        border.width: model.isTarget && !monthGlass.active ? 1 : 0
                                         Behavior on border.color { ColorAnimation { duration: 300 } }
+
+                                        GlassFill {
+                                            id: monthGlass
+                                            anchors.fill: parent
+                                            radius: parent.radius
+                                            forceClear: model.total > 0
+                                            tintColor: model.total > 0 ? ThemeBackend.mauve : ThemeBackend.surface2
+                                            tintAmount: model.total > 0 ? 0.25 + 0.45 * parent.intensity : 0.22
+                                            tintStrength: 1.0
+                                        }
+
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            radius: parent.radius
+                                            color: "transparent"
+                                            border.color: tabRoot.textMain
+                                            border.width: model.isTarget && monthGlass.active ? 1 : 0
+                                        }
 
                                         visible: model.total !== -1
                                         scale: 0.7 + (0.3 * introMidRight)
@@ -962,14 +1036,24 @@ Item {
                             width: ListView.view.width - (appList.contentHeight > appList.height ? rootObj.s(8) : 0)
                             height: rootObj.s(52)
                             radius: ThemeBackend.borderRadius
-                            color: rowMa.containsMouse ? Qt.alpha(ThemeBackend.surface1, 0.45) : Qt.alpha(ThemeBackend.surface0, 0.4)
+                            color: gfRow.active ? "transparent" : (rowMa.containsMouse ? Qt.alpha(ThemeBackend.surface1, 0.45) : Qt.alpha(ThemeBackend.surface0, 0.4))
                             border.color: rowMa.containsMouse ? Qt.alpha(ThemeBackend.surface2, 0.45) : Qt.alpha(ThemeBackend.surface1, 0.3)
-                            border.width: 1
+                            border.width: ThemeBackend.liquidGlass ? 0 : 1
 
                             Behavior on color { ColorAnimation { duration: 150 } }
                             Behavior on border.color { ColorAnimation { duration: 150 } }
 
                             transform: Translate { y: (index * rootObj.s(12)) * (1 - introBottom) }
+
+                            GlassFill {
+                                id: gfRow
+                                anchors.fill: parent
+                                radius: parent.radius
+                                tintColor: Qt.alpha(ThemeBackend.surface0, 0.4)
+                                tintAmount: 0.25
+                                press: rowMa.pressed ? 0.8 : (rowMa.containsMouse ? 0.25 : 0)
+                                Behavior on press { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                            }
 
                             MouseArea {
                                 id: rowMa
@@ -999,7 +1083,15 @@ Item {
                                     Layout.preferredHeight: rootObj.s(32)
                                     Layout.alignment: Qt.AlignVCenter
                                     radius: Math.round(rootObj.s(32) * 0.28)
-                                    color: ThemeBackend.surface0
+                                    color: gf6.active ? "transparent" : ThemeBackend.surface0
+
+                                    GlassFill {
+                                        id: gf6
+                                        anchors.fill: parent
+                                        radius: parent.radius
+                                        tintColor: ThemeBackend.surface0
+                                        tintAmount: 0.25
+                                    }
                                     clip: true
 
                                     Image {
@@ -1025,7 +1117,7 @@ Item {
                                         font.family: ThemeBackend.fontFamily
                                         font.pixelSize: rootObj.s(13)
                                         font.bold: true
-                                        color: ThemeBackend.text
+                                        color: tabRoot.textMain
                                     }
                                 }
 
@@ -1039,7 +1131,7 @@ Item {
                                         font.family: ThemeBackend.fontFamily
                                         font.weight: Font.DemiBold
                                         font.pixelSize: rootObj.s(13)
-                                        color: ThemeBackend.text
+                                        color: tabRoot.textMain
                                         text: model.name
                                         elide: Text.ElideRight
                                     }
@@ -1052,15 +1144,42 @@ Item {
                                             Layout.fillWidth: true
                                             Layout.alignment: Qt.AlignVCenter
                                             height: rootObj.s(10)
-                                            Rectangle { anchors.fill: parent; radius: rootObj.s(5); color: ThemeBackend.surface1 }
                                             Rectangle {
+                                                anchors.fill: parent
+                                                radius: rootObj.s(5)
+                                                color: pbTrack1.active ? "transparent" : ThemeBackend.surface1
+
+                                                GlassFill {
+                                                    id: pbTrack1
+                                                    anchors.fill: parent
+                                                    radius: parent.radius
+                                                    tintColor: ThemeBackend.surface1
+                                                    tintAmount: 0.22
+                                                }
+                                            }
+                                            Item {
                                                 height: parent.height
                                                 width: Math.max(rootObj.s(10), parent.width * (model.percent / 100.0) * tabRoot.introAppBars)
-                                                radius: rootObj.s(5)
-                                                color: ThemeBackend.mauve
                                                 Behavior on width {
                                                     enabled: tabRoot.introAppBars === 1.0
                                                     NumberAnimation { duration: 600; easing.type: Easing.OutQuint }
+                                                }
+
+                                                Rectangle {
+                                                    anchors.fill: parent
+                                                    radius: rootObj.s(5)
+                                                    color: ThemeBackend.mauve
+                                                    visible: !pbFill1.active
+                                                }
+
+                                                GlassFill {
+                                                    id: pbFill1
+                                                    anchors.fill: parent
+                                                    radius: rootObj.s(5)
+                                                    forceClear: true
+                                                    tintColor: ThemeBackend.mauve
+                                                    tintAmount: 0.6
+                                                    tintStrength: 1.0
                                                 }
                                             }
                                         }
@@ -1073,7 +1192,7 @@ Item {
                                             cornerRadius: Math.min(ThemeBackend.borderRadius, rootObj.s(6))
                                             textFontSize: rootObj.s(13)
                                             accentColor: Qt.alpha(ThemeBackend.surface1, 0.7)
-                                            textColor: ThemeBackend.subtext0
+                                            textColor: tabRoot.textSub
                                             buttonText: tabRoot.formatTimeList(model.seconds)
                                         }
                                     }
@@ -1086,9 +1205,17 @@ Item {
                         id: appChartCard
                         anchors.fill: parent
                         radius: ThemeBackend.borderRadius
-                        color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                        color: gf7.active ? "transparent" : Qt.alpha(ThemeBackend.surface0, 0.4)
+
+                        GlassFill {
+                            id: gf7
+                            anchors.fill: parent
+                            radius: parent.radius
+                            tintColor: Qt.alpha(ThemeBackend.surface0, 0.4)
+                            tintAmount: 0.25
+                        }
                         border.color: Qt.alpha(ThemeBackend.surface1, 0.3)
-                        border.width: 1
+                        border.width: ThemeBackend.liquidGlass ? 0 : 1
 
                         opacity: tabRoot.appViewFocus
                         visible: opacity > 0
@@ -1113,14 +1240,14 @@ Item {
                                     buttonIcon: "󰘖"
                                     iconFontSize: rootObj.s(13)
                                     accentColor: ThemeBackend.surface0
-                                    textColor: ThemeBackend.mauve
+                                    textColor: tabRoot.textAccent
                                 }
 
                                 Text {
                                     font.family: ThemeBackend.fontFamily
                                     font.weight: Font.DemiBold
                                     font.pixelSize: rootObj.s(13)
-                                    color: ThemeBackend.text
+                                    color: tabRoot.textMain
                                     text: I18n.t("guide.wellbeing.daily_usage")
                                 }
                             }
@@ -1139,9 +1266,20 @@ Item {
                                         Rectangle {
                                             anchors.bottom: parent.bottom
                                             width: parent.width
-                                            height: Math.max(rootObj.s(4), parent.height * (tabRoot.hourlyData[index] / Math.max(tabRoot.maxHourlyTotal, 1)) * tabRoot.introAppBars)
+                                            height: Math.max(rootObj.s(4), parent.height * (hourValue / Math.max(tabRoot.maxHourlyTotal, 1)) * tabRoot.introAppBars)
                                             radius: rootObj.s(2)
-                                            color: tabRoot.hourlyData[index] > 0 ? ThemeBackend.blue : ThemeBackend.surface1
+                                            readonly property real hourValue: tabRoot ? (tabRoot.hourlyData[index] || 0) : 0
+                                            color: hourGlass.active ? "transparent" : (hourValue > 0 ? ThemeBackend.blue : ThemeBackend.surface1)
+
+                                            GlassFill {
+                                                id: hourGlass
+                                                anchors.fill: parent
+                                                radius: parent.radius
+                                                forceClear: parent.hourValue > 0
+                                                tintColor: parent.hourValue > 0 ? ThemeBackend.blue : ThemeBackend.surface1
+                                                tintAmount: parent.hourValue > 0 ? 0.6 : 0.22
+                                                tintStrength: 1.0
+                                            }
 
                                             Behavior on height {
                                                 enabled: tabRoot.introAppBars === 1.0
@@ -1162,15 +1300,15 @@ Item {
 
                             RowLayout {
                                 Layout.fillWidth: true
-                                Text { font.family: ThemeBackend.fontFamily; font.weight: Font.Medium; font.pixelSize: rootObj.s(10); color: ThemeBackend.overlay0; text: "00:00" }
+                                Text { font.family: ThemeBackend.fontFamily; font.weight: Font.Medium; font.pixelSize: rootObj.s(10); color: tabRoot.textDim; text: "00:00" }
                                 Item { Layout.fillWidth: true }
-                                Text { font.family: ThemeBackend.fontFamily; font.weight: Font.Medium; font.pixelSize: rootObj.s(10); color: ThemeBackend.overlay0; text: "06:00" }
+                                Text { font.family: ThemeBackend.fontFamily; font.weight: Font.Medium; font.pixelSize: rootObj.s(10); color: tabRoot.textDim; text: "06:00" }
                                 Item { Layout.fillWidth: true }
-                                Text { font.family: ThemeBackend.fontFamily; font.weight: Font.Medium; font.pixelSize: rootObj.s(10); color: ThemeBackend.overlay0; text: "12:00" }
+                                Text { font.family: ThemeBackend.fontFamily; font.weight: Font.Medium; font.pixelSize: rootObj.s(10); color: tabRoot.textDim; text: "12:00" }
                                 Item { Layout.fillWidth: true }
-                                Text { font.family: ThemeBackend.fontFamily; font.weight: Font.Medium; font.pixelSize: rootObj.s(10); color: ThemeBackend.overlay0; text: "18:00" }
+                                Text { font.family: ThemeBackend.fontFamily; font.weight: Font.Medium; font.pixelSize: rootObj.s(10); color: tabRoot.textDim; text: "18:00" }
                                 Item { Layout.fillWidth: true }
-                                Text { font.family: ThemeBackend.fontFamily; font.weight: Font.Medium; font.pixelSize: rootObj.s(10); color: ThemeBackend.overlay0; text: "23:00" }
+                                Text { font.family: ThemeBackend.fontFamily; font.weight: Font.Medium; font.pixelSize: rootObj.s(10); color: tabRoot.textDim; text: "23:00" }
                             }
                         }
                     }
@@ -1191,9 +1329,17 @@ Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: rootObj.s(230)
                     radius: ThemeBackend.borderRadius
-                    color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                    color: gf8.active ? "transparent" : Qt.alpha(ThemeBackend.surface0, 0.4)
+
+                    GlassFill {
+                        id: gf8
+                        anchors.fill: parent
+                        radius: parent.radius
+                        tintColor: Qt.alpha(ThemeBackend.surface0, 0.4)
+                        tintAmount: 0.25
+                    }
                     border.color: Qt.alpha(ThemeBackend.surface1, 0.3)
-                    border.width: 1
+                    border.width: ThemeBackend.liquidGlass ? 0 : 1
 
                     opacity: introMidLeft
                     transform: Translate { y: rootObj.s(20) * (1 - introMidLeft) }
@@ -1233,7 +1379,7 @@ Item {
                                         font.family: ThemeBackend.fontFamily
                                         font.weight: Font.Normal
                                         font.pixelSize: rootObj.s(11)
-                                        color: ThemeBackend.subtext0
+                                        color: tabRoot.textSub
                                         verticalAlignment: Text.AlignVCenter
                                     }
                                 }
@@ -1268,9 +1414,19 @@ Item {
                                                         height: parent.height
                                                         radius: 0
 
-                                                        property real val: (tabRoot.weekHeatmapData[dayIndex] && tabRoot.weekHeatmapData[dayIndex][index]) ? tabRoot.weekHeatmapData[dayIndex][index] : 0
+                                                        property real val: (tabRoot && tabRoot.weekHeatmapData[dayIndex] && tabRoot.weekHeatmapData[dayIndex][index]) ? tabRoot.weekHeatmapData[dayIndex][index] : 0
                                                         property real intensity: Math.min(1.0, 0.2 + 0.8 * (val / Math.max(tabRoot.maxWeekHour, 1)))
-                                                        color: val === 0 ? ThemeBackend.surface1 : Qt.rgba(ThemeBackend.mauve.r, ThemeBackend.mauve.g, ThemeBackend.mauve.b, intensity)
+                                                        color: weekCellGlass.active ? "transparent" : (val === 0 ? ThemeBackend.surface1 : Qt.rgba(ThemeBackend.mauve.r, ThemeBackend.mauve.g, ThemeBackend.mauve.b, intensity))
+
+                                                        GlassFill {
+                                                            id: weekCellGlass
+                                                            anchors.fill: parent
+                                                            radius: parent.radius
+                                                            forceClear: parent.val > 0
+                                                            tintColor: parent.val > 0 ? ThemeBackend.mauve : ThemeBackend.surface1
+                                                            tintAmount: parent.val > 0 ? 0.25 + 0.45 * parent.intensity : 0.22
+                                                            tintStrength: 1.0
+                                                        }
 
                                                         scale: tabRoot.isWeekView ? 1.0 : 0.5
                                                         Behavior on scale {
@@ -1306,9 +1462,17 @@ Item {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
                                 radius: ThemeBackend.borderRadius
-                                color: Qt.alpha(ThemeBackend.surface1, 0.35)
+                                color: gf9.active ? "transparent" : Qt.alpha(ThemeBackend.surface1, 0.35)
+
+                                GlassFill {
+                                    id: gf9
+                                    anchors.fill: parent
+                                    radius: parent.radius
+                                    tintColor: Qt.alpha(ThemeBackend.surface1, 0.35)
+                                    tintAmount: 0.25
+                                }
                                 border.color: Qt.alpha(ThemeBackend.surface2, 0.35)
-                                border.width: 1
+                                border.width: ThemeBackend.liquidGlass ? 0 : 1
 
                                 RowLayout {
                                     anchors.centerIn: parent
@@ -1332,14 +1496,14 @@ Item {
                                             font.family: ThemeBackend.fontFamily
                                             font.weight: Font.Medium
                                             font.pixelSize: rootObj.s(11)
-                                            color: ThemeBackend.subtext0
+                                            color: tabRoot.textSub
                                             text: I18n.t("guide.wellbeing.daily_average")
                                         }
                                         Text {
                                             font.family: ThemeBackend.fontFamily
                                             font.weight: Font.Bold
                                             font.pixelSize: rootObj.s(16)
-                                            color: ThemeBackend.text
+                                            color: tabRoot.textMain
                                             text: tabRoot.formatTimeList(tabRoot.averageSeconds)
                                         }
                                     }
@@ -1350,9 +1514,17 @@ Item {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
                                 radius: ThemeBackend.borderRadius
-                                color: Qt.alpha(ThemeBackend.surface1, 0.35)
+                                color: gf10.active ? "transparent" : Qt.alpha(ThemeBackend.surface1, 0.35)
+
+                                GlassFill {
+                                    id: gf10
+                                    anchors.fill: parent
+                                    radius: parent.radius
+                                    tintColor: Qt.alpha(ThemeBackend.surface1, 0.35)
+                                    tintAmount: 0.25
+                                }
                                 border.color: Qt.alpha(ThemeBackend.surface2, 0.35)
-                                border.width: 1
+                                border.width: ThemeBackend.liquidGlass ? 0 : 1
 
                                 RowLayout {
                                     anchors.centerIn: parent
@@ -1367,7 +1539,7 @@ Item {
                                         buttonIcon: "󰥔"
                                         iconFontSize: rootObj.s(16)
                                         accentColor: ThemeBackend.surface0
-                                        textColor: ThemeBackend.mauve
+                                        textColor: tabRoot.textAccent
                                     }
 
                                     ColumnLayout {
@@ -1376,14 +1548,14 @@ Item {
                                             font.family: ThemeBackend.fontFamily
                                             font.weight: Font.Medium
                                             font.pixelSize: rootObj.s(11)
-                                            color: ThemeBackend.subtext0
+                                            color: tabRoot.textSub
                                             text: I18n.t("guide.wellbeing.peak_hours")
                                         }
                                         Text {
                                             font.family: ThemeBackend.fontFamily
                                             font.weight: Font.Bold
                                             font.pixelSize: rootObj.s(13)
-                                            color: ThemeBackend.text
+                                            color: tabRoot.textMain
                                             text: tabRoot.peakUsageHours
                                         }
                                     }
@@ -1422,14 +1594,24 @@ Item {
                             width: ListView.view.width - (weekAppList.contentHeight > weekAppList.height ? rootObj.s(8) : 0)
                             height: rootObj.s(52)
                             radius: ThemeBackend.borderRadius
-                            color: weekRowMa.containsMouse ? Qt.alpha(ThemeBackend.surface1, 0.45) : Qt.alpha(ThemeBackend.surface0, 0.4)
+                            color: gfWeekRow.active ? "transparent" : (weekRowMa.containsMouse ? Qt.alpha(ThemeBackend.surface1, 0.45) : Qt.alpha(ThemeBackend.surface0, 0.4))
                             border.color: weekRowMa.containsMouse ? Qt.alpha(ThemeBackend.surface2, 0.45) : Qt.alpha(ThemeBackend.surface1, 0.3)
-                            border.width: 1
+                            border.width: ThemeBackend.liquidGlass ? 0 : 1
 
                             Behavior on color { ColorAnimation { duration: 150 } }
                             Behavior on border.color { ColorAnimation { duration: 150 } }
 
                             transform: Translate { y: (index * rootObj.s(12)) * (1 - introBottom) }
+
+                            GlassFill {
+                                id: gfWeekRow
+                                anchors.fill: parent
+                                radius: parent.radius
+                                tintColor: Qt.alpha(ThemeBackend.surface0, 0.4)
+                                tintAmount: 0.25
+                                press: weekRowMa.pressed ? 0.8 : (weekRowMa.containsMouse ? 0.25 : 0)
+                                Behavior on press { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                            }
 
                             MouseArea {
                                 id: weekRowMa
@@ -1459,7 +1641,15 @@ Item {
                                     Layout.preferredHeight: rootObj.s(32)
                                     Layout.alignment: Qt.AlignVCenter
                                     radius: Math.round(rootObj.s(32) * 0.28)
-                                    color: ThemeBackend.surface0
+                                    color: gf11.active ? "transparent" : ThemeBackend.surface0
+
+                                    GlassFill {
+                                        id: gf11
+                                        anchors.fill: parent
+                                        radius: parent.radius
+                                        tintColor: ThemeBackend.surface0
+                                        tintAmount: 0.25
+                                    }
                                     clip: true
 
                                     Image {
@@ -1485,7 +1675,7 @@ Item {
                                         font.family: ThemeBackend.fontFamily
                                         font.pixelSize: rootObj.s(13)
                                         font.bold: true
-                                        color: ThemeBackend.text
+                                        color: tabRoot.textMain
                                     }
                                 }
 
@@ -1499,7 +1689,7 @@ Item {
                                         font.family: ThemeBackend.fontFamily
                                         font.weight: Font.DemiBold
                                         font.pixelSize: rootObj.s(13)
-                                        color: ThemeBackend.text
+                                        color: tabRoot.textMain
                                         text: model.name
                                         elide: Text.ElideRight
                                     }
@@ -1512,15 +1702,42 @@ Item {
                                             Layout.fillWidth: true
                                             Layout.alignment: Qt.AlignVCenter
                                             height: rootObj.s(10)
-                                            Rectangle { anchors.fill: parent; radius: rootObj.s(5); color: ThemeBackend.surface1 }
                                             Rectangle {
+                                                anchors.fill: parent
+                                                radius: rootObj.s(5)
+                                                color: pbTrack2.active ? "transparent" : ThemeBackend.surface1
+
+                                                GlassFill {
+                                                    id: pbTrack2
+                                                    anchors.fill: parent
+                                                    radius: parent.radius
+                                                    tintColor: ThemeBackend.surface1
+                                                    tintAmount: 0.22
+                                                }
+                                            }
+                                            Item {
                                                 height: parent.height
                                                 width: Math.max(rootObj.s(10), parent.width * (model.percent / 100.0) * tabRoot.introAppBars)
-                                                radius: rootObj.s(5)
-                                                color: ThemeBackend.mauve
                                                 Behavior on width {
                                                     enabled: tabRoot.introAppBars === 1.0
                                                     NumberAnimation { duration: 600; easing.type: Easing.OutQuint }
+                                                }
+
+                                                Rectangle {
+                                                    anchors.fill: parent
+                                                    radius: rootObj.s(5)
+                                                    color: ThemeBackend.mauve
+                                                    visible: !pbFill2.active
+                                                }
+
+                                                GlassFill {
+                                                    id: pbFill2
+                                                    anchors.fill: parent
+                                                    radius: rootObj.s(5)
+                                                    forceClear: true
+                                                    tintColor: ThemeBackend.mauve
+                                                    tintAmount: 0.6
+                                                    tintStrength: 1.0
                                                 }
                                             }
                                         }
@@ -1533,7 +1750,7 @@ Item {
                                             cornerRadius: Math.min(ThemeBackend.borderRadius, rootObj.s(6))
                                             textFontSize: rootObj.s(13)
                                             accentColor: Qt.alpha(ThemeBackend.surface1, 0.7)
-                                            textColor: ThemeBackend.subtext0
+                                            textColor: tabRoot.textSub
                                             buttonText: tabRoot.formatTimeList(model.seconds)
                                         }
                                     }

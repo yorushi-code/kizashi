@@ -347,13 +347,25 @@ FocusScope {
             radius: root.cornerRadius
             clip: true
             opacity: root.enabled ? 1.0 : 0.5
-            color: {
+            readonly property color stateColor: {
                 if (root.hasFocus) return root.focusColor;
                 if (innerInput.text.length > 0) return root.activeColor;
                 if (root.isHoveredOrHighlighted) return root.hoverColor;
                 return root.baseColor;
             }
+            color: glass.active ? "transparent" : stateColor
             Behavior on color { ColorAnimation { duration: 180 } }
+
+            GlassFill {
+                id: glass
+                anchors.fill: parent
+                radius: parent.radius
+                tintColor: bgShape.stateColor
+                tintAmount: root.hasFocus ? 0.38 : 0.26
+                press: root.hasFocus ? 0.55 : (root.isHoveredOrHighlighted ? 0.2 : 0)
+                Behavior on press { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Behavior on tintAmount { NumberAnimation { duration: 180 } }
+            }
         }
 
         CanvasIconButton {

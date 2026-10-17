@@ -249,7 +249,15 @@ Item {
                             Layout.fillWidth: true
                             implicitHeight: rowHwLayout.implicitHeight + rootObj.s(20)
                             radius: ThemeBackend.borderRadius
-                            color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                            color: gf1.active ? "transparent" : Qt.alpha(ThemeBackend.surface0, 0.4)
+
+                            GlassFill {
+                                id: gf1
+                                anchors.fill: parent
+                                radius: parent.radius
+                                tintColor: Qt.alpha(ThemeBackend.surface0, 0.4)
+                                tintAmount: 0.25
+                            }
                             border.width: 0
 
                             RowLayout {
@@ -321,7 +329,15 @@ Item {
                             Layout.fillWidth: true
                             implicitHeight: rowSysLayout.implicitHeight + rootObj.s(20)
                             radius: ThemeBackend.borderRadius
-                            color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                            color: gf2.active ? "transparent" : Qt.alpha(ThemeBackend.surface0, 0.4)
+
+                            GlassFill {
+                                id: gf2
+                                anchors.fill: parent
+                                radius: parent.radius
+                                tintColor: Qt.alpha(ThemeBackend.surface0, 0.4)
+                                tintAmount: 0.25
+                            }
                             border.width: 0
 
                             RowLayout {

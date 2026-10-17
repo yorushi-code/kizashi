@@ -63,7 +63,7 @@ export default function Home(): ReactNode {
   return (
     <Layout
       title={siteConfig.title}
-      description="Kizashi is a customizable Wayland desktop shell for Hyprland, Sway and Niri, built for you.">
+      description="Kizashi is a customizable Wayland desktop shell for Hyprland, Sway, Niri and Mango, built for you.">
       <Head>
         <title>Kizashi - a desktop shell built for YOU</title>
         <meta property="og:title" content="Kizashi - a desktop shell built for YOU" />

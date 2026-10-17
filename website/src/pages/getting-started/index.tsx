@@ -32,7 +32,7 @@ const STEPS: StepCard[] = [
     title: 'Install',
     image: '/img/previews/steps/install_preview.webp',
     buttonText: 'Install',
-    buttonLink: '/installation/arch',
+    buttonLink: '/installation',
   },
   {
     title: 'Configure',
@@ -55,7 +55,7 @@ export default function GettingStarted(): ReactNode {
   const {ref: carouselRef, shouldLoad, markLoaded} = useLazyPreviews<HTMLDivElement>(currentIndex);
 
   const stepUrls = [
-    useBaseUrl('/installation/arch'),
+    useBaseUrl('/installation'),
     useBaseUrl('/configure'),
     useBaseUrl('/'),
   ];

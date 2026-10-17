@@ -98,11 +98,6 @@ Item {
         return ThemeBackend.green;
     }
 
-    property real globalOrbitAngle: 0
-    NumberAnimation on globalOrbitAngle {
-        from: 0; to: Math.PI * 2; duration: 90000; loops: Animation.Infinite; running: window.visible
-    }
-
     readonly property PwNode activeNode: {
         if (window.activeTab === "inputs") {
             return Audio.defaultSource || (Audio.inputs.length > 0 ? Audio.inputs[0] : null);
@@ -189,26 +184,18 @@ Item {
         Rectangle {
             anchors.fill: parent
             radius: ThemeBackend.borderRadius
-            color: ThemeBackend.base
-            border.color: ThemeBackend.surface0
-            border.width: 1
+            color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
+            border.width: 0
+            border.color: "transparent"
             clip: true
 
-            Rectangle {
-                width: parent.width * 0.8; height: width; radius: width / 2
-                x: (parent.width / 2 - width / 2) + Math.cos(window.globalOrbitAngle * 2) * window.s(120)
-                y: (parent.height / 2 - height / 2) + Math.sin(window.globalOrbitAngle * 2) * window.s(80)
-                opacity: 0.06
-                color: window.tabColor
-                Behavior on color { ColorAnimation { duration: 800 } }
-            }
-            Rectangle {
-                width: parent.width * 0.9; height: width; radius: width / 2
-                x: (parent.width / 2 - width / 2) + Math.sin(window.globalOrbitAngle * 1.5) * window.s(-120)
-                y: (parent.height / 2 - height / 2) + Math.cos(window.globalOrbitAngle * 1.5) * window.s(-80)
-                opacity: 0.04
-                color: Qt.lighter(window.tabColor, 1.3)
-                Behavior on color { ColorAnimation { duration: 800 } }
+            WallpaperBlur {
+                z: -1
+                anchors.fill: parent
+                topLeftRadius: parent.topLeftRadius
+                topRightRadius: parent.topRightRadius
+                bottomLeftRadius: parent.bottomLeftRadius
+                bottomRightRadius: parent.bottomRightRadius
             }
 
             ColumnLayout {

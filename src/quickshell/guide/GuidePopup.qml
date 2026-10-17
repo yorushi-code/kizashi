@@ -344,7 +344,6 @@ Item {
                     tabIndex: tIdx,
                     title: isKnown ? resolveTabTitle(tModel.key || tModel.id) : I18n.t("guide.tabs.general", "General"),
                     icon: isKnown ? (tModel.icon || "󰒓") : "󰒓",
-                    iconOffsetX: isKnown ? (tModel.iconOffsetX ?? 0) : 0,
                     directItems: [],
                     subgroupsMap: {}
                 };
@@ -362,7 +361,6 @@ Item {
                         subIndex: sIdx,
                         title: resolveSubtabTitle(tModel.key || tModel.id, stModel.key || stModel.id),
                         icon: stModel.icon || "󰒓",
-                        iconOffsetX: stModel.iconOffsetX ?? 0,
                         items: []
                     };
                 }
@@ -380,7 +378,6 @@ Item {
                 tabIndex: tg.tabIndex,
                 title: tg.title,
                 icon: tg.icon,
-                iconOffsetX: tg.iconOffsetX,
                 directItems: tg.directItems,
                 subgroups: subList
             };
@@ -539,40 +536,38 @@ Item {
     }
 
     property var tabsModel: [
-        { id: "Welcome", key: "welcome", name: "Welcome", icon: "󰋜", file: "WelcomeTab.qml", iconOffsetX: -1 },
-        { id: "General", key: "general", name: "General", icon: "󰒓", file: "general/GeneralTab.qml", iconOffsetX: 0 },
+        { id: "Welcome", key: "welcome", name: "Welcome", icon: "󰋜", file: "WelcomeTab.qml" },
+        { id: "General", key: "general", name: "General", icon: "󰒓", file: "general/GeneralTab.qml" },
         { 
             id: "Display", 
             key: "display", 
             name: "Display", 
             icon: "󰃠", 
             file: "display/DisplayMainTab.qml", 
-            iconOffsetX: 0,
             subtabs: [
-                { id: "DisplayGeneral", key: "display_general", name: "Display", icon: "󰃠", file: "display/DisplayMainTab.qml", iconOffsetX: 1 },
-                { id: "DisplayWidgets", key: "display_widgets", name: "Widgets", icon: "󰕰", file: "display/DisplayWidgetsTab.qml", iconOffsetX: 0 }
+                { id: "DisplayGeneral", key: "display_general", name: "Display", icon: "󰃠", file: "display/DisplayMainTab.qml" },
+                { id: "DisplayWidgets", key: "display_widgets", name: "Widgets", icon: "󰕰", file: "display/DisplayWidgetsTab.qml" }
             ]
         },
-        { id: "Theme", key: "theme", name: "Theme", icon: "󰏘", file: "theme/ThemeTab.qml", iconOffsetX: 0 },
+        { id: "Theme", key: "theme", name: "Theme", icon: "󰏘", file: "theme/ThemeTab.qml" },
         { 
             id: "Bar", 
             key: "bar", 
             name: "Bar", 
             icon: "󰹑", 
             file: "bar/BarGeneralTab.qml", 
-            iconOffsetX: -2,
             subtabs: [
-                { id: "BarGeneral", key: "bar_general", name: "General", icon: "󰒓", file: "bar/BarGeneralTab.qml", iconOffsetX: 1 },
-                { id: "BarModules", key: "bar_modules", name: "Modules", icon: "󰮯", file: "bar/BarModulesTab.qml", iconOffsetX: 0 }
+                { id: "BarGeneral", key: "bar_general", name: "General", icon: "󰒓", file: "bar/BarGeneralTab.qml" },
+                { id: "BarModules", key: "bar_modules", name: "Modules", icon: "󰮯", file: "bar/BarModulesTab.qml" }
             ]
         },
-        { id: "Launcher", key: "launcher", name: "Launcher", icon: "󰵆", file: "LauncherTab.qml", iconOffsetX: 0 },
-        { id: "Dock", key: "dock", name: "Dock", icon: "󰮯", file: "DockTab.qml", iconOffsetX: 0 },
-        { id: "On-Screen Display", key: "osd", name: "On-Screen Display", icon: "󰕾", file: "OnScreenDisplayTab.qml", iconOffsetX: 0 },
-        { id: "Notifications", key: "notifications", name: "Notifications", icon: "󰂚", file: "notifications/NotificationsTab.qml", iconOffsetX: 0 },
-        { id: "Wellbeing", key: "wellbeing", name: "Wellbeing", icon: "󰄉", file: "wellbeing/DigitalWellbeingTab.qml", iconOffsetX: 0 },        
-        { id: "Idle", key: "idle", name: "Idle", icon: "󰒲", file: "IdleTab.qml", iconOffsetX: 0 },
-        { id: "About", key: "about", name: "About", icon: "󰋽", file: "AboutTab.qml", iconOffsetX: 0 }
+        { id: "Launcher", key: "launcher", name: "Launcher", icon: "󰵆", file: "LauncherTab.qml" },
+        { id: "Dock", key: "dock", name: "Dock", icon: "󰮯", file: "DockTab.qml" },
+        { id: "On-Screen Display", key: "osd", name: "On-Screen Display", icon: "󰕾", file: "OnScreenDisplayTab.qml" },
+        { id: "Notifications", key: "notifications", name: "Notifications", icon: "󰂚", file: "notifications/NotificationsTab.qml" },
+        { id: "Wellbeing", key: "wellbeing", name: "Wellbeing", icon: "󰄉", file: "wellbeing/DigitalWellbeingTab.qml" },        
+        { id: "Idle", key: "idle", name: "Idle", icon: "󰒲", file: "IdleTab.qml" },
+        { id: "About", key: "about", name: "About", icon: "󰋽", file: "AboutTab.qml" }
     ]
 
     StackView.onStatusChanged: {
@@ -1048,7 +1043,16 @@ Item {
         Rectangle {
             anchors.fill: parent
             radius: ThemeBackend.clampedBorderRadius
-            color: ThemeBackend.base
+            color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
+
+            WallpaperBlur {
+                z: -1
+                anchors.fill: parent
+                topLeftRadius: parent.topLeftRadius
+                topRightRadius: parent.topRightRadius
+                bottomLeftRadius: parent.bottomLeftRadius
+                bottomRightRadius: parent.bottomRightRadius
+            }
 
             property real time: 0
             NumberAnimation on time {

@@ -261,12 +261,7 @@ PanelWindow {
         return Config.rawSettings.bar.position || "top";
     }
 
-    property real barOpacity: {
-        let dummy = configRevision;
-        if (!rawBarSettings || rawBarSettings.opacity === undefined) return 1.0;
-        let op = Number(rawBarSettings.opacity);
-        return op > 1.0 ? (op / 100.0) : op;
-    }
+    property real barOpacity: ThemeBackend.elementOpacity
 
     property bool barAutohide: (rawBarSettings && rawBarSettings.autohide !== undefined) ? Boolean(rawBarSettings.autohide) : false
 
@@ -564,12 +559,42 @@ PanelWindow {
         }
     }
 
+    function normalizeDecimalCommas(expr) {
+        let out = "";
+        let parens = [];
+        for (let i = 0; i < expr.length; i++) {
+            let ch = expr[i];
+            if (ch === "(") {
+                parens.push({ isPow: /pow\s*$/i.test(expr.substring(0, i)), commas: 0 });
+            } else if (ch === ")") {
+                parens.pop();
+            } else if (ch === ",") {
+                let top = parens.length > 0 ? parens[parens.length - 1] : null;
+                if (top && top.isPow) {
+                    if (++top.commas > 1) return null;
+                    out += ch;
+                    continue;
+                }
+                if (/\d/.test(expr[i - 1] || "") && /\d/.test(expr[i + 1] || "")) {
+                    out += ".";
+                    continue;
+                }
+                return null;
+            }
+            out += ch;
+        }
+        return out;
+    }
+
     function evaluateMath(expr) {
         if (!expr) return null;
         let trimmed = expr.trim();
         if (trimmed.length === 0 || trimmed.startsWith(">")) return null;
 
-        let parsed = trimmed
+        let normalized = normalizeDecimalCommas(trimmed);
+        if (normalized === null) return null;
+
+        let parsed = normalized
             .replace(/×/g, "*")
             .replace(/÷/g, "/")
             .replace(/\bpi\b/gi, "Math.PI")
@@ -1150,7 +1175,7 @@ PanelWindow {
         transformOrigin: Item.Center
 
         ShaderEffect {
-            visible: !launcherWindow.isCentered && container.dynamicCornerRadius > 0.5
+            visible: !launcherWindow.isCentered && container.dynamicCornerRadius > 0.5 && !ThemeBackend.liquidGlass
             x: {
                 if (launcherWindow.attachEdge === "left") return 0;
                 if (launcherWindow.attachEdge === "right") return parent.width - container.dynamicCornerRadius;
@@ -1170,12 +1195,12 @@ PanelWindow {
                 if (launcherWindow.attachEdge === "right") return 3.0;
                 return 1.0;
             }
-            property color color: ThemeBackend.base
+            property color color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             fragmentShader: "file://" + Caching.kizashiDir + "/assets/shaders/ui/corner_cutout.frag.qsb"
         }
 
         ShaderEffect {
-            visible: !launcherWindow.isCentered && container.dynamicCornerRadius > 0.5
+            visible: !launcherWindow.isCentered && container.dynamicCornerRadius > 0.5 && !ThemeBackend.liquidGlass
             x: {
                 if (launcherWindow.attachEdge === "left") return 0;
                 if (launcherWindow.attachEdge === "right") return parent.width - container.dynamicCornerRadius;
@@ -1195,7 +1220,7 @@ PanelWindow {
                 if (launcherWindow.attachEdge === "right") return 1.0;
                 return 0.0;
             }
-            property color color: ThemeBackend.base
+            property color color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             fragmentShader: "file://" + Caching.kizashiDir + "/assets/shaders/ui/corner_cutout.frag.qsb"
         }
 
@@ -1203,81 +1228,95 @@ PanelWindow {
             id: bgCard
             anchors.fill: parent
             radius: container.dynamicCornerRadius
-            color: ThemeBackend.base
+            readonly property bool flatCorners: ThemeBackend.liquidGlass && !launcherWindow.isCentered
+            topLeftRadius: (flatCorners && (launcherWindow.attachEdge === "top" || launcherWindow.attachEdge === "left")) ? 0 : container.dynamicCornerRadius
+            topRightRadius: (flatCorners && (launcherWindow.attachEdge === "top" || launcherWindow.attachEdge === "right")) ? 0 : container.dynamicCornerRadius
+            bottomLeftRadius: (flatCorners && (launcherWindow.attachEdge === "bottom" || launcherWindow.attachEdge === "left")) ? 0 : container.dynamicCornerRadius
+            bottomRightRadius: (flatCorners && (launcherWindow.attachEdge === "bottom" || launcherWindow.attachEdge === "right")) ? 0 : container.dynamicCornerRadius
+            color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             border.width: 0
             border.color: launcherWindow.isCentered ? Qt.alpha(ThemeBackend.surface2, 0.6) : "transparent"
             clip: true
 
+            WallpaperBlur {
+                z: -1
+                anchors.fill: parent
+                topLeftRadius: parent.topLeftRadius
+                topRightRadius: parent.topRightRadius
+                bottomLeftRadius: parent.bottomLeftRadius
+                bottomRightRadius: parent.bottomRightRadius
+            }
+
             Rectangle {
-                visible: launcherWindow.attachEdge === "top" && container.dynamicCornerRadius > 0.5
+                visible: !ThemeBackend.liquidGlass && launcherWindow.attachEdge === "top" && container.dynamicCornerRadius > 0.5
                 x: 0
                 y: 0
                 width: container.dynamicCornerRadius
                 height: container.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "top" && container.dynamicCornerRadius > 0.5
+                visible: !ThemeBackend.liquidGlass && launcherWindow.attachEdge === "top" && container.dynamicCornerRadius > 0.5
                 x: parent.width - container.dynamicCornerRadius
                 y: 0
                 width: container.dynamicCornerRadius
                 height: container.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "bottom" && container.dynamicCornerRadius > 0.5
+                visible: !ThemeBackend.liquidGlass && launcherWindow.attachEdge === "bottom" && container.dynamicCornerRadius > 0.5
                 x: 0
                 y: parent.height - container.dynamicCornerRadius
                 width: container.dynamicCornerRadius
                 height: container.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "bottom" && container.dynamicCornerRadius > 0.5
+                visible: !ThemeBackend.liquidGlass && launcherWindow.attachEdge === "bottom" && container.dynamicCornerRadius > 0.5
                 x: parent.width - container.dynamicCornerRadius
                 y: parent.height - container.dynamicCornerRadius
                 width: container.dynamicCornerRadius
                 height: container.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "left" && container.dynamicCornerRadius > 0.5
+                visible: !ThemeBackend.liquidGlass && launcherWindow.attachEdge === "left" && container.dynamicCornerRadius > 0.5
                 x: 0
                 y: 0
                 width: container.dynamicCornerRadius
                 height: container.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "left" && container.dynamicCornerRadius > 0.5
+                visible: !ThemeBackend.liquidGlass && launcherWindow.attachEdge === "left" && container.dynamicCornerRadius > 0.5
                 x: 0
                 y: parent.height - container.dynamicCornerRadius
                 width: container.dynamicCornerRadius
                 height: container.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "right" && container.dynamicCornerRadius > 0.5
+                visible: !ThemeBackend.liquidGlass && launcherWindow.attachEdge === "right" && container.dynamicCornerRadius > 0.5
                 x: parent.width - container.dynamicCornerRadius
                 y: 0
                 width: container.dynamicCornerRadius
                 height: container.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "right" && container.dynamicCornerRadius > 0.5
+                visible: !ThemeBackend.liquidGlass && launcherWindow.attachEdge === "right" && container.dynamicCornerRadius > 0.5
                 x: parent.width - container.dynamicCornerRadius
                 y: parent.height - container.dynamicCornerRadius
                 width: container.dynamicCornerRadius
                 height: container.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Item {
@@ -1300,6 +1339,7 @@ PanelWindow {
                     height: launcherWindow.s(36)
 
                     baseColor: ThemeBackend.surface0
+                    bgOpacity: ThemeBackend.glassActive ? 0.0 : 1.0
                     accentColor: ThemeBackend.mauve
                     textColor: ThemeBackend.text
                     subTextColor: ThemeBackend.subtext0
@@ -1433,6 +1473,7 @@ PanelWindow {
                     cornerRadius: ThemeBackend.borderRadius
                     fontPixelSize: launcherWindow.s(11)
                     baseColor: ThemeBackend.surface0
+                    bgOpacity: ThemeBackend.glassActive ? 0.0 : 1.0
                     accentColor: ThemeBackend.mauve
                     textColor: ThemeBackend.text
                     activeTextColor: ThemeBackend.crust
@@ -1467,6 +1508,26 @@ PanelWindow {
                         property: "contentY"
                         duration: 260
                         easing.type: Easing.OutCubic
+                    }
+
+                    Item {
+                        id: highlightGlassLayer
+                        visible: ThemeBackend.liquidGlass && appList.visible && morphHighlight.visible
+                        width: appList.width
+                        height: morphHighlight.height
+                        x: morphHighlight.x + launcherWindow.s(-20) * (1.0 - launcherWindow.getItemProgress(appList.currentIndex))
+                        y: morphHighlight.y - appList.contentY
+                        opacity: morphHighlight.opacity
+
+                        GlassFill {
+                            anchors.fill: parent
+                            radius: morphHighlight.radius
+                            forceOpaque: true
+                            tintColor: ThemeBackend.text
+                            tintAmount: 0
+                            tintStrength: 1.0
+                            press: 0.6
+                        }
                     }
 
                     ListView {
@@ -1564,7 +1625,7 @@ PanelWindow {
                             width: appList.width
                             height: launcherWindow.s(44)
                             radius: ThemeBackend.borderRadius
-                            color: ThemeBackend.mauve
+                            color: ThemeBackend.liquidGlass ? "transparent" : ThemeBackend.mauve
 
                             property real targetY: (appList.currentIndex >= 0 && appModel.count > 0)
                                                    ? appList.getItemY(appList.currentIndex)
@@ -1608,8 +1669,18 @@ PanelWindow {
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: ThemeBackend.borderRadius
-                                    color: ThemeBackend.surface0
-                                    opacity: ma.containsMouse && !delegateRoot.isSelected ? 0.45 : 0
+                                    color: (ThemeBackend.liquidGlass || rowHoverGlass.active) ? "transparent" : ThemeBackend.surface0
+                                    opacity: ma.containsMouse && !delegateRoot.isSelected ? (ThemeBackend.liquidGlass ? 1.0 : 0.45) : 0
+
+                                    GlassFill {
+                                        id: rowHoverGlass
+                                        anchors.fill: parent
+                                        radius: parent.radius
+                                        allowed: ma.containsMouse && !delegateRoot.isSelected
+                                        tintColor: ThemeBackend.surface0
+                                        tintAmount: 0.3
+                                        press: ma.pressed ? 0.8 : 0.2
+                                    }
                                     Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutSine } }
                                 }
 
@@ -1643,12 +1714,22 @@ PanelWindow {
                                             anchors.bottomMargin: -launcherWindow.s(1.5)
                                             radius: parent.boxRadius
                                             color: Qt.rgba(0, 0, 0, 0.12)
+                                            visible: !iconBoxGlass.active
                                         }
 
                                         Rectangle {
                                             anchors.fill: parent
                                             radius: parent.boxRadius
-                                            color: delegateRoot.isSelected ? Qt.tint(ThemeBackend.surface2, Qt.rgba(ThemeBackend.mauve.r, ThemeBackend.mauve.g, ThemeBackend.mauve.b, 0.2)) : ThemeBackend.surface2
+                                            color: iconBoxGlass.active ? "transparent" : (delegateRoot.isSelected ? Qt.tint(ThemeBackend.surface2, Qt.rgba(ThemeBackend.mauve.r, ThemeBackend.mauve.g, ThemeBackend.mauve.b, 0.2)) : ThemeBackend.surface2)
+
+                                            GlassFill {
+                                                id: iconBoxGlass
+                                                anchors.fill: parent
+                                                radius: parent.radius
+                                                forceClear: delegateRoot.isSelected
+                                                tintColor: delegateRoot.isSelected ? ThemeBackend.text : ThemeBackend.surface2
+                                                tintAmount: delegateRoot.isSelected ? 0.1 : 0.3
+                                            }
 
                                             Behavior on color { ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
                                         }
@@ -1733,7 +1814,7 @@ PanelWindow {
                                             font.family: ThemeBackend.fontFamily
                                             font.pixelSize: launcherWindow.s(12)
                                             font.weight: delegateRoot.isSelected ? Font.Bold : Font.Medium
-                                            color: delegateRoot.isSelected ? ThemeBackend.crust : ThemeBackend.text
+                                            color: delegateRoot.isSelected ? (ThemeBackend.liquidGlass ? ThemeBackend.text : ThemeBackend.crust) : ThemeBackend.text
                                             horizontalAlignment: I18n.textAlignment
                                             elide: Text.ElideRight
                                             verticalAlignment: Text.AlignVCenter
@@ -1749,7 +1830,7 @@ PanelWindow {
                                             font.family: ThemeBackend.fontFamily
                                             font.pixelSize: launcherWindow.s(10)
                                             font.weight: Font.Normal
-                                            color: delegateRoot.isSelected ? ThemeBackend.crust : ThemeBackend.subtext0
+                                            color: delegateRoot.isSelected ? (ThemeBackend.liquidGlass ? ThemeBackend.text : ThemeBackend.crust) : ThemeBackend.subtext0
                                             horizontalAlignment: I18n.textAlignment
                                             opacity: delegateRoot.isSelected ? 0.9 : 0.85
                                             elide: Text.ElideRight
@@ -1884,10 +1965,21 @@ PanelWindow {
                                     id: emojiBg
                                     anchors.fill: parent
                                     radius: ThemeBackend.borderRadius
-                                    color: emojiDelegateRoot.isSelected
+                                    color: emojiGlass.active ? "transparent" : (emojiDelegateRoot.isSelected
                                            ? ThemeBackend.mauve
-                                           : (emojiMa.containsMouse ? Qt.alpha(ThemeBackend.surface1, 0.7) : Qt.alpha(ThemeBackend.surface0, 0.45))
-                                    border.width: emojiDelegateRoot.isSelected ? 0 : 1
+                                           : (emojiMa.containsMouse ? Qt.alpha(ThemeBackend.surface1, 0.7) : Qt.alpha(ThemeBackend.surface0, 0.45)))
+                                    border.width: (emojiDelegateRoot.isSelected || ThemeBackend.liquidGlass) ? 0 : 1
+
+                                    GlassFill {
+                                        id: emojiGlass
+                                        anchors.fill: parent
+                                        radius: parent.radius
+                                        forceOpaque: emojiDelegateRoot.isSelected
+                                        tintColor: emojiDelegateRoot.isSelected ? ThemeBackend.text : ThemeBackend.surface0
+                                        tintStrength: emojiDelegateRoot.isSelected ? 1.0 : 0.5
+                                        tintAmount: emojiDelegateRoot.isSelected ? 0 : 0.25
+                                        press: emojiMa.pressed ? 0.8 : (emojiDelegateRoot.isSelected ? 0.6 : (emojiMa.containsMouse ? 0.25 : 0))
+                                    }
                                     border.color: emojiDelegateRoot.isSelected ? "transparent" : Qt.alpha(ThemeBackend.surface2, 0.3)
 
                                     Behavior on color {
@@ -1915,7 +2007,7 @@ PanelWindow {
                                         font.family: ThemeBackend.fontFamily
                                         font.pixelSize: launcherWindow.s(9)
                                         font.weight: emojiDelegateRoot.isSelected ? Font.Bold : Font.Normal
-                                        color: emojiDelegateRoot.isSelected ? ThemeBackend.crust : ThemeBackend.subtext0
+                                        color: emojiDelegateRoot.isSelected ? (emojiGlass.active ? ThemeBackend.text : ThemeBackend.crust) : ThemeBackend.subtext0
                                         elide: Text.ElideRight
                                         horizontalAlignment: Text.AlignHCenter
                                         maximumLineCount: 1
