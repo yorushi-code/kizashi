@@ -293,6 +293,28 @@ Scope {
                         toolbarCheckTimer.restart();
                     }
 
+                    function removeWidget(widgetId) {
+                        let rmId = String(widgetId);
+                        if (!rmId) return;
+                        if (redactorMode.selectedId === rmId) {
+                            redactorMode.selectedId = "";
+                            root.targetSelectedWidgetId = "";
+                        }
+                        WidgetSync.removeWidget(redactorWindow.safeMonitorName, rmId);
+                        if (activeWidgetsModel) {
+                            for (let i = activeWidgetsModel.count - 1; i >= 0; i--) {
+                                if (String(activeWidgetsModel.get(i).wId) === rmId) {
+                                    activeWidgetsModel.remove(i, 1);
+                                }
+                            }
+                            if (activeWidgetsModel.count === 0) {
+                                redactorMode.selectedId = "";
+                                root.targetSelectedWidgetId = "";
+                            }
+                        }
+                        redactorMode.updateToolbarObscured();
+                    }
+
                     function removeAllWidgets() {
                         redactorMode.selectedId = "";
                         root.targetSelectedWidgetId = "";
@@ -1615,8 +1637,20 @@ Scope {
                                     }
                                 }
 
+                                WallpaperBlur {
+                                    id: chromeBackdrop
+                                    standalone: true
+                                    opacity: 0
+                                    x: bottomChrome.x
+                                    y: bottomChrome.y
+                                    width: bottomChrome.width
+                                    height: bottomChrome.height
+                                    radius: 0
+                                }
+
                                 ColumnLayout {
                                     id: bottomChrome
+                                    property Item glassBackdropItem: chromeBackdrop
                                     z: 40
                                     opacity: (widgetProxy.isSelected && !baseSelectMa.pressed) ? 1.0 : 0.0
                                     visible: opacity > 0
@@ -1710,8 +1744,16 @@ Scope {
                                             id: pxReadoutPill
                                             implicitWidth: pxReadoutText.implicitWidth + s(16)
                                             implicitHeight: s(34)
-                                            color: ThemeBackend.surface0
+                                            color: pxGlass.active ? "transparent" : ThemeBackend.surface0
                                             radius: ThemeBackend.borderRadius
+
+                                            GlassFill {
+                                                id: pxGlass
+                                                anchors.fill: parent
+                                                radius: parent.radius
+                                                tintColor: ThemeBackend.surface0
+                                                tintAmount: 0.3
+                                            }
 
                                             Text {
                                                 id: pxReadoutText
@@ -1728,8 +1770,16 @@ Scope {
                                             id: arReadoutPill
                                             implicitWidth: arReadoutText.implicitWidth + s(16)
                                             implicitHeight: s(34)
-                                            color: ThemeBackend.surface0
+                                            color: arGlass.active ? "transparent" : ThemeBackend.surface0
                                             radius: ThemeBackend.borderRadius
+
+                                            GlassFill {
+                                                id: arGlass
+                                                anchors.fill: parent
+                                                radius: parent.radius
+                                                tintColor: ThemeBackend.surface0
+                                                tintAmount: 0.3
+                                            }
 
                                             Text {
                                                 id: arReadoutText
@@ -1746,8 +1796,16 @@ Scope {
                                             id: pctReadoutPill
                                             implicitWidth: pctReadoutText.implicitWidth + s(16)
                                             implicitHeight: s(34)
-                                            color: ThemeBackend.surface0
+                                            color: pctGlass.active ? "transparent" : ThemeBackend.surface0
                                             radius: ThemeBackend.borderRadius
+
+                                            GlassFill {
+                                                id: pctGlass
+                                                anchors.fill: parent
+                                                radius: parent.radius
+                                                tintColor: ThemeBackend.surface0
+                                                tintAmount: 0.3
+                                            }
 
                                             Text {
                                                 id: pctReadoutText
@@ -1850,27 +1908,7 @@ Scope {
                                             cornerRadius: ThemeBackend.borderRadius
                                             iconFontSize: s(18)
 
-                                            onClicked: {
-                                                let rmId = String(widgetProxy.wId);
-                                                if (redactorMode.selectedId === rmId) {
-                                                    redactorMode.selectedId = "";
-                                                    root.targetSelectedWidgetId = "";
-                                                }
-                                                WidgetSync.removeWidget(redactorWindow.safeMonitorName, rmId);
-                                                let activeModel = redactorMode.activeWidgetsModel;
-                                                if (activeModel) {
-                                                    for (let i = activeModel.count - 1; i >= 0; i--) {
-                                                        if (String(activeModel.get(i).wId) === rmId) {
-                                                            activeModel.remove(i, 1);
-                                                        }
-                                                    }
-                                                    if (activeModel.count === 0) {
-                                                        redactorMode.selectedId = "";
-                                                        root.targetSelectedWidgetId = "";
-                                                    }
-                                                }
-                                                redactorMode.updateToolbarObscured();
-                                            }
+                                            onClicked: redactorMode.removeWidget(widgetProxy.wId)
                                         }
                                     }
 
@@ -1937,18 +1975,21 @@ Scope {
                                             }
                                         }
 
-                                        Switch {
-                                            id: variantSwitch
+                                        Dropdown {
+                                            id: variantDropdown
                                             property var variantsList: bottomChrome.variantsList
                                             visible: bottomChrome.hasVariants
                                             implicitHeight: s(34)
-                                            implicitWidth: Math.max(s(120), options.length * s(70))
+                                            implicitWidth: s(150)
                                             accentColor: ThemeBackend.mauve
                                             baseColor: ThemeBackend.surface0
+                                            dropdownColor: ThemeBackend.base
+                                            borderColor: ThemeBackend.surface1
                                             textColor: ThemeBackend.text
                                             activeTextColor: ThemeBackend.crust
                                             cornerRadius: ThemeBackend.borderRadius
                                             fontPixelSize: s(11)
+                                            fuzzySearch: false
                                             options: variantsList.map(v => v.label || v.id)
 
                                             function updateCurrentIndex() {
@@ -1966,11 +2007,11 @@ Scope {
                                             Connections {
                                                 target: widgetProxy
                                                 function onWVariantChanged() {
-                                                    variantSwitch.updateCurrentIndex();
+                                                    variantDropdown.updateCurrentIndex();
                                                 }
                                             }
 
-                                            onToggled: (idx) => {
+                                            onSelected: (idx, value) => {
                                                 if (idx >= 0 && idx < variantsList.length) {
                                                     widgetProxy.applyVariant(variantsList[idx].id);
                                                 }
@@ -1981,8 +2022,16 @@ Scope {
                                             id: opacityPill
                                             implicitWidth: bottomChrome.hasVariants ? s(200) : s(280)
                                             implicitHeight: s(34)
-                                            color: ThemeBackend.surface0
+                                            color: opacityGlass.active ? "transparent" : ThemeBackend.surface0
                                             radius: ThemeBackend.borderRadius
+
+                                            GlassFill {
+                                                id: opacityGlass
+                                                anchors.fill: parent
+                                                radius: parent.radius
+                                                tintColor: ThemeBackend.surface0
+                                                tintAmount: 0.3
+                                            }
 
                                             RowLayout {
                                                 anchors.fill: parent
@@ -2171,6 +2220,7 @@ Scope {
                         anchors.bottomMargin: s(24)
                         anchors.horizontalCenter: parent.horizontalCenter
                         z: 200000
+                        property Item glassBackdropItem: toolbarBlur
 
                         opacity: (!redactorMode.activeWidgetsModel || redactorMode.activeWidgetsModel.count === 0 || redactorMode.selectedId === "" || !redactorMode.toolbarObscured) ? 1.0 : 0.0
                         visible: opacity > 0
@@ -2179,8 +2229,16 @@ Scope {
 
                         Rectangle {
                             anchors.fill: parent
-                            color: ThemeBackend.base
+                            color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                             radius: ThemeBackend.borderRadius
+
+                            WallpaperBlur {
+                                id: toolbarBlur
+                                z: -1
+                                anchors.fill: parent
+                                radius: parent.radius
+                                standalone: true
+                            }
                         }
 
                         RowLayout {
@@ -2216,7 +2274,6 @@ Scope {
                                     size: s(40)
                                     cornerRadius: ThemeBackend.borderRadius
                                     buttonIcon: "󰕰"
-                                    iconOffsetX: 0
                                     iconFontSize: s(20)
                                     accentColor: redactorMode.gridEnabled ? ThemeBackend.mauve : ThemeBackend.surface0
                                     textColor: redactorMode.gridEnabled ? ThemeBackend.crust : ThemeBackend.text
@@ -2240,7 +2297,6 @@ Scope {
                                     textColor: ThemeBackend.text
                                     Layout.alignment: Qt.AlignVCenter
                                     visible: redactorMode.activeWidgetsModel ? (redactorMode.activeWidgetsModel.count > 0) : false
-                                    iconOffsetX: -1
                                     onClicked: redactorMode.removeAllWidgets()
                                 }
 

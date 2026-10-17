@@ -172,11 +172,7 @@ PanelWindow {
         return barConfig.position || "top";
     }
 
-    property real barOpacity: {
-        if (!barConfig || barConfig.opacity === undefined) return 1.0;
-        let op = Number(barConfig.opacity);
-        return op > 1.0 ? (op / 100.0) : op;
-    }
+    property real barOpacity: ThemeBackend.elementOpacity
 
     property bool isFullscreen: OsdController.isFullscreen
     readonly property bool isBarEffectivelyHidden: barAutohide || isFullscreen
@@ -273,7 +269,7 @@ PanelWindow {
 
     Timer {
         id: briCmdThrottle
-        interval: 400
+        interval: 120
         property int targetPct: -1
         onTriggered: {
             if (targetPct >= 0) {
@@ -373,7 +369,7 @@ PanelWindow {
                 }
                 return osdWindow.isBottomBar ? 3.0 : 1.0;
             }
-            property color color: ThemeBackend.base
+            property color color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             fragmentShader: "file://" + Caching.kizashiDir + "/assets/shaders/ui/corner_cutout.frag.qsb"
         }
 
@@ -400,25 +396,34 @@ PanelWindow {
                 }
                 return osdWindow.isBottomBar ? 2.0 : 0.0;
             }
-            property color color: ThemeBackend.base
+            property color color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             fragmentShader: "file://" + Caching.kizashiDir + "/assets/shaders/ui/corner_cutout.frag.qsb"
         }
         Rectangle {
             id: osdBox
             anchors.fill: parent
-            color: ThemeBackend.base
+            color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             radius: osdWindow.cornerRadius
-            border.width: osdWindow.isAttached ? 0 : 1
-            border.color: osdWindow.isAttached ? "transparent" : ThemeBackend.surface0
+            border.width: 0
+            border.color: "transparent"
             clip: true
 
+            WallpaperBlur {
+                z: -1
+                anchors.fill: parent
+                topLeftRadius: parent.topLeftRadius
+                topRightRadius: parent.topRightRadius
+                bottomLeftRadius: parent.bottomLeftRadius
+                bottomRightRadius: parent.bottomRightRadius
+            }
+
             Rectangle {
                 visible: osdWindow.isAttached && !osdWindow.isSideBar && !osdWindow.isBottomBar && osdContainer.dynamicCornerRadius > 0.5
                 x: 0
                 y: 0
                 width: osdContainer.dynamicCornerRadius
                 height: osdContainer.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Rectangle {
@@ -427,7 +432,7 @@ PanelWindow {
                 y: 0
                 width: osdContainer.dynamicCornerRadius
                 height: osdContainer.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Rectangle {
@@ -436,7 +441,7 @@ PanelWindow {
                 y: parent.height - osdContainer.dynamicCornerRadius
                 width: osdContainer.dynamicCornerRadius
                 height: osdContainer.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Rectangle {
@@ -445,7 +450,7 @@ PanelWindow {
                 y: parent.height - osdContainer.dynamicCornerRadius
                 width: osdContainer.dynamicCornerRadius
                 height: osdContainer.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Rectangle {
@@ -454,7 +459,7 @@ PanelWindow {
                 y: 0
                 width: osdContainer.dynamicCornerRadius
                 height: osdContainer.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Rectangle {
@@ -463,7 +468,7 @@ PanelWindow {
                 y: parent.height - osdContainer.dynamicCornerRadius
                 width: osdContainer.dynamicCornerRadius
                 height: osdContainer.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Rectangle {
@@ -472,7 +477,7 @@ PanelWindow {
                 y: 0
                 width: osdContainer.dynamicCornerRadius
                 height: osdContainer.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             Rectangle {
@@ -481,7 +486,7 @@ PanelWindow {
                 y: parent.height - osdContainer.dynamicCornerRadius
                 width: osdContainer.dynamicCornerRadius
                 height: osdContainer.dynamicCornerRadius
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             }
 
             HoverHandler {
@@ -508,12 +513,6 @@ PanelWindow {
                 IconButton {
                     Layout.alignment: Qt.AlignHCenter
                     size: osdWindow.s(26)
-                    iconOffsetX: {
-                        if (osdWindow.kind === "airplane" || osdWindow.kind === "capslock") return -1;
-                        if (osdWindow.kind === "volume") return -1;
-                        if (osdWindow.kind === "mic") return 0;
-                        return -3;
-                    }
                     cornerRadius: osdWindow.s(8)
                     buttonIcon: {
                         if (osdWindow.kind === "volume") {
@@ -620,6 +619,7 @@ PanelWindow {
                     gradColor3: Qt.lighter(activeColor, 1.10)
                     cornerRadius: osdWindow.s(5)
                     handleSize: osdWindow.s(22)
+                    showValueBubble: false
 
                     handleColor: (osdWindow.isMutedState) ? ThemeBackend.overlay0 : Qt.lighter(activeColor, 1.15)
                     handleHoverColor: (osdWindow.isMutedState) ? ThemeBackend.subtext0 : Qt.lighter(activeColor, 1.5)
@@ -641,7 +641,7 @@ PanelWindow {
                         if (osdWindow.kind === "brightness") {
                             OsdController.briVal = pct;
                             briCmdThrottle.targetPct = pct;
-                            if (!verticalSlider.isDragging) briCmdThrottle.restart();
+                            if (!briCmdThrottle.running) briCmdThrottle.start();
                         } else if (osdWindow.kind === "volume") {
                             cmdThrottle.targetPct = pct;
                             if (!cmdThrottle.running) cmdThrottle.start();
@@ -649,6 +649,23 @@ PanelWindow {
                             micThrottle.targetPct = pct;
                             if (!micThrottle.running) micThrottle.start();
                         }
+                    }
+                }
+
+                Item {
+                    id: verticalValueContainer
+                    visible: !osdWindow.isToggleKind
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: osdWindow.s(26)
+                    Layout.preferredHeight: osdWindow.s(26)
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: Math.round(verticalSlider.effectiveValue).toString()
+                        font.family: ThemeBackend.fontFamily
+                        font.pixelSize: osdWindow.s(13)
+                        font.bold: true
+                        color: osdWindow.isMutedState ? ThemeBackend.overlay0 : ThemeBackend.text
                     }
                 }
             }
@@ -667,12 +684,6 @@ PanelWindow {
                         anchors.centerIn: parent
                         size: osdWindow.s(30)
                         cornerRadius: osdWindow.s(8)
-                        iconOffsetX: {
-                            if (osdWindow.kind === "airplane" || osdWindow.kind === "capslock") return -1;
-                            if (osdWindow.kind === "volume") return -1;
-                            if (osdWindow.kind === "mic") return 0;
-                            return -3;
-                        }
                         buttonIcon: {
                             if (osdWindow.kind === "volume") {
                                 return osdWindow.isMuted || osdWindow.volVal === 0 ? "󰖁" : (osdWindow.volVal > 50 ? "󰕾" : "󰖀");
@@ -781,15 +792,16 @@ PanelWindow {
 
                 Draggable {
                     id: horizontalSlider
-                    width: Math.max(0, osdContainer.width - osdWindow.s(80))
+                    width: Math.max(0, osdContainer.width - osdWindow.s(116))
                     height: osdWindow.s(18)
                     anchors.left: parent.left
                     anchors.leftMargin: osdWindow.s(58)
                     anchors.right: parent.right
-                    anchors.rightMargin: osdWindow.s(16)
+                    anchors.rightMargin: osdWindow.s(58)
                     anchors.verticalCenter: parent.verticalCenter
                     opacity: Math.max(0.0, Math.min(1.0, (osdContainer.animProgress - 0.2) / 0.8))
                     visible: !osdWindow.isToggleKind && opacity > 0.01
+                    showValueBubble: false
 
                     from: 0.0
                     to: 100.0
@@ -833,7 +845,7 @@ PanelWindow {
                         if (osdWindow.kind === "brightness") {
                             OsdController.briVal = pct;
                             briCmdThrottle.targetPct = pct;
-                            if (!horizontalSlider.isDragging) briCmdThrottle.restart();
+                            if (!briCmdThrottle.running) briCmdThrottle.start();
                         } else if (osdWindow.kind === "volume") {
                             cmdThrottle.targetPct = pct;
                             if (!cmdThrottle.running) cmdThrottle.start();
@@ -841,6 +853,25 @@ PanelWindow {
                             micThrottle.targetPct = pct;
                             if (!micThrottle.running) micThrottle.start();
                         }
+                    }
+                }
+
+                Item {
+                    id: horizontalValueContainer
+                    width: osdWindow.s(58)
+                    height: parent.height
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    opacity: Math.max(0.0, Math.min(1.0, (osdContainer.animProgress - 0.2) / 0.8))
+                    visible: !osdWindow.isToggleKind && opacity > 0.01
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: Math.round(horizontalSlider.effectiveValue).toString()
+                        font.family: ThemeBackend.fontFamily
+                        font.pixelSize: osdWindow.s(13)
+                        font.bold: true
+                        color: osdWindow.isMutedState ? ThemeBackend.overlay0 : ThemeBackend.text
                     }
                 }
             }

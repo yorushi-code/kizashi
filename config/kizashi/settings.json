@@ -14,6 +14,7 @@
   "bar": {
     "position": "top",
     "width": 100,
+    "height": 40,
     "opacity": 100,
     "style": "fill",
     "time": {
@@ -61,7 +62,7 @@
         "timeout": 150,
         "enabled": true,
         "respectInhibitors": true,
-        "mprisInhibit": false,
+        "mprisInhibit": true,
         "command": "",
         "resumeCommand": "",
         "isCustom": false
@@ -71,7 +72,7 @@
         "timeout": 450,
         "enabled": true,
         "respectInhibitors": true,
-        "mprisInhibit": false,
+        "mprisInhibit": true,
         "command": "",
         "resumeCommand": "",
         "isCustom": false
@@ -81,7 +82,7 @@
         "timeout": 300,
         "enabled": true,
         "respectInhibitors": true,
-        "mprisInhibit": false,
+        "mprisInhibit": true,
         "command": "",
         "resumeCommand": "",
         "isCustom": false
@@ -91,7 +92,7 @@
         "timeout": 600,
         "enabled": true,
         "respectInhibitors": true,
-        "mprisInhibit": false,
+        "mprisInhibit": true,
         "command": "",
         "resumeCommand": "",
         "isCustom": false

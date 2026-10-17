@@ -13,7 +13,9 @@ Item {
     // streams lets the volume panel leave them out of the app list (they would
     // flash in and out) and show one permanent "Interface sounds" row instead.
     readonly property string streamName: "Kizashi interface sounds"
-    readonly property var pwPlayProps: ["-P", "{ application.name = \"" + streamName + "\" media.role = \"Event\" }"]
+    // application.id -- метка, по которой Audio.isKizashiStream (апстрим)
+    // узнаёт наши потоки; имя остаётся нашим, по нему строка «Interface sounds».
+    readonly property var pwPlayProps: ["-P", "{ application.id = \"kizashi-sfx\" application.name = \"" + streamName + "\" media.role = \"Event\" }"]
 
     property var activeHandles: ({})
     property int nextHandleId: 1

@@ -13,7 +13,7 @@ Item {
     anchors.fill: parent
     visible: rootObj.currentTab === tabIndex
 
-    property bool revealed: false
+    property bool revealed: true
     opacity: revealed ? 1.0 : 0.0
     property real slideY: revealed ? 0 : rootObj.s(10)
 
@@ -112,9 +112,14 @@ Item {
                 activateTab();
             }
         }
+        function onVisibleChanged() {
+            if (rootObj && rootObj.visible && welcomeTabRoot.visible) {
+                activateTab();
+            }
+        }
     }
 
-    property real logoFillLevel: 0.0
+    property real logoFillLevel: 1.15
 
     NumberAnimation {
         id: logoFillAnim
@@ -147,7 +152,7 @@ Item {
                     anchors.centerIn: parent
                     width: rootObj.s(210)
                     height: rootObj.s(210)
-                    source: "file://" + rootObj.appPaths.kizashiDir + "/assets/logo.svg"
+                    source: "file://" + (typeof Caching !== "undefined" && Caching.kizashiDir ? Caching.kizashiDir : (rootObj && rootObj.appPaths ? rootObj.appPaths.kizashiDir : "")) + "/assets/logo.svg"
                     sourceSize: Qt.size(width, height)
                     fillMode: Image.PreserveAspectFit
                     smooth: true

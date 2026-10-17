@@ -47,6 +47,23 @@ PanelWindow {
 
     function s(val) { return (typeof Scaler !== "undefined") ? Scaler.s(val) : val; }
 
+    function resolveMenuIcon(icon) {
+        if (!icon) return "";
+        let ic = String(icon);
+        if (ic.startsWith("file://") || ic.startsWith("http://") || ic.startsWith("https://")) return ic;
+        if (ic.startsWith("image://") && !ic.startsWith("image://icon/")) return ic;
+        if (ic.startsWith("/")) return "file://" + ic;
+        let name = ic.startsWith("image://icon/") ? ic.substring("image://icon/".length) : ic;
+        name = name.replace(/\.(png|svg|xpm|ico)$/i, "");
+        let candidates = [name];
+        if (name.endsWith("-symbolic")) candidates.push(name.substring(0, name.length - "-symbolic".length));
+        for (let i = 0; i < candidates.length; i++) {
+            let resolved = Quickshell.iconPath(candidates[i], true);
+            if (resolved && resolved.length > 0) return resolved.startsWith("/") ? "file://" + resolved : resolved;
+        }
+        return "";
+    }
+
     property bool isVisible: TrayMenuController.isVisible
     property string activeItemId: TrayMenuController.activeItemId
     property real targetX: TrayMenuController.targetX
@@ -331,7 +348,7 @@ PanelWindow {
             }
 
             ShaderEffect {
-                visible: trayMenuWindow.isSolid && menuContainer.dynamicCornerRadius > 0.5
+                visible: trayMenuWindow.isSolid && menuContainer.dynamicCornerRadius > 0.5 && !ThemeBackend.liquidGlass
                 x: {
                     if (trayMenuWindow.isSideBar) {
                         return trayMenuWindow.alignRight ? (parent.width - menuContainer.dynamicCornerRadius) : 0;
@@ -353,12 +370,12 @@ PanelWindow {
                     }
                     return trayMenuWindow.alignBottom ? 3.0 : 1.0;
                 }
-                property color color: ThemeBackend.base
+                property color color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                 fragmentShader: "file://" + Caching.kizashiDir + "/assets/shaders/ui/corner_cutout.frag.qsb"
             }
 
             ShaderEffect {
-                visible: trayMenuWindow.isSolid && menuContainer.dynamicCornerRadius > 0.5
+                visible: trayMenuWindow.isSolid && menuContainer.dynamicCornerRadius > 0.5 && !ThemeBackend.liquidGlass
                 x: {
                     if (trayMenuWindow.isSideBar) {
                         return trayMenuWindow.alignRight ? (parent.width - menuContainer.dynamicCornerRadius) : 0;
@@ -380,89 +397,103 @@ PanelWindow {
                     }
                     return trayMenuWindow.alignBottom ? 2.0 : 0.0;
                 }
-                property color color: ThemeBackend.base
+                property color color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                 fragmentShader: "file://" + Caching.kizashiDir + "/assets/shaders/ui/corner_cutout.frag.qsb"
             }
 
             Rectangle {
                 id: menuBox
                 anchors.fill: parent
-                color: ThemeBackend.base
+                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                 radius: trayMenuWindow.cornerRadius
+                readonly property bool flatCorners: ThemeBackend.liquidGlass && trayMenuWindow.isSolid
+                topLeftRadius: (flatCorners && (trayMenuWindow.isSideBar ? !trayMenuWindow.alignRight : !trayMenuWindow.alignBottom)) ? 0 : trayMenuWindow.cornerRadius
+                topRightRadius: (flatCorners && (trayMenuWindow.isSideBar ? trayMenuWindow.alignRight : !trayMenuWindow.alignBottom)) ? 0 : trayMenuWindow.cornerRadius
+                bottomLeftRadius: (flatCorners && (trayMenuWindow.isSideBar ? !trayMenuWindow.alignRight : trayMenuWindow.alignBottom)) ? 0 : trayMenuWindow.cornerRadius
+                bottomRightRadius: (flatCorners && (trayMenuWindow.isSideBar ? trayMenuWindow.alignRight : trayMenuWindow.alignBottom)) ? 0 : trayMenuWindow.cornerRadius
                 border.width: 0
                 border.color: "transparent"
                 clip: true
 
+                WallpaperBlur {
+                    z: -1
+                    anchors.fill: parent
+                    topLeftRadius: parent.topLeftRadius
+                    topRightRadius: parent.topRightRadius
+                    bottomLeftRadius: parent.bottomLeftRadius
+                    bottomRightRadius: parent.bottomRightRadius
+                }
+
                 Rectangle {
-                    visible: trayMenuWindow.isSolid && !trayMenuWindow.isSideBar && !trayMenuWindow.alignBottom && menuContainer.dynamicCornerRadius > 0.5
+                    visible: !ThemeBackend.liquidGlass && trayMenuWindow.isSolid && !trayMenuWindow.isSideBar && !trayMenuWindow.alignBottom && menuContainer.dynamicCornerRadius > 0.5
                     x: 0
                     y: 0
                     width: menuContainer.dynamicCornerRadius
                     height: menuContainer.dynamicCornerRadius
-                    color: ThemeBackend.base
+                    color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                 }
 
                 Rectangle {
-                    visible: trayMenuWindow.isSolid && !trayMenuWindow.isSideBar && !trayMenuWindow.alignBottom && menuContainer.dynamicCornerRadius > 0.5
+                    visible: !ThemeBackend.liquidGlass && trayMenuWindow.isSolid && !trayMenuWindow.isSideBar && !trayMenuWindow.alignBottom && menuContainer.dynamicCornerRadius > 0.5
                     x: parent.width - menuContainer.dynamicCornerRadius
                     y: 0
                     width: menuContainer.dynamicCornerRadius
                     height: menuContainer.dynamicCornerRadius
-                    color: ThemeBackend.base
+                    color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                 }
 
                 Rectangle {
-                    visible: trayMenuWindow.isSolid && !trayMenuWindow.isSideBar && trayMenuWindow.alignBottom && menuContainer.dynamicCornerRadius > 0.5
+                    visible: !ThemeBackend.liquidGlass && trayMenuWindow.isSolid && !trayMenuWindow.isSideBar && trayMenuWindow.alignBottom && menuContainer.dynamicCornerRadius > 0.5
                     x: 0
                     y: parent.height - menuContainer.dynamicCornerRadius
                     width: menuContainer.dynamicCornerRadius
                     height: menuContainer.dynamicCornerRadius
-                    color: ThemeBackend.base
+                    color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                 }
 
                 Rectangle {
-                    visible: trayMenuWindow.isSolid && !trayMenuWindow.isSideBar && trayMenuWindow.alignBottom && menuContainer.dynamicCornerRadius > 0.5
+                    visible: !ThemeBackend.liquidGlass && trayMenuWindow.isSolid && !trayMenuWindow.isSideBar && trayMenuWindow.alignBottom && menuContainer.dynamicCornerRadius > 0.5
                     x: parent.width - menuContainer.dynamicCornerRadius
                     y: parent.height - menuContainer.dynamicCornerRadius
                     width: menuContainer.dynamicCornerRadius
                     height: menuContainer.dynamicCornerRadius
-                    color: ThemeBackend.base
+                    color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                 }
 
                 Rectangle {
-                    visible: trayMenuWindow.isSolid && trayMenuWindow.isSideBar && !trayMenuWindow.alignRight && menuContainer.dynamicCornerRadius > 0.5
+                    visible: !ThemeBackend.liquidGlass && trayMenuWindow.isSolid && trayMenuWindow.isSideBar && !trayMenuWindow.alignRight && menuContainer.dynamicCornerRadius > 0.5
                     x: 0
                     y: 0
                     width: menuContainer.dynamicCornerRadius
                     height: menuContainer.dynamicCornerRadius
-                    color: ThemeBackend.base
+                    color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                 }
 
                 Rectangle {
-                    visible: trayMenuWindow.isSolid && trayMenuWindow.isSideBar && !trayMenuWindow.alignRight && menuContainer.dynamicCornerRadius > 0.5
+                    visible: !ThemeBackend.liquidGlass && trayMenuWindow.isSolid && trayMenuWindow.isSideBar && !trayMenuWindow.alignRight && menuContainer.dynamicCornerRadius > 0.5
                     x: 0
                     y: parent.height - menuContainer.dynamicCornerRadius
                     width: menuContainer.dynamicCornerRadius
                     height: menuContainer.dynamicCornerRadius
-                    color: ThemeBackend.base
+                    color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                 }
 
                 Rectangle {
-                    visible: trayMenuWindow.isSolid && trayMenuWindow.isSideBar && trayMenuWindow.alignRight && menuContainer.dynamicCornerRadius > 0.5
+                    visible: !ThemeBackend.liquidGlass && trayMenuWindow.isSolid && trayMenuWindow.isSideBar && trayMenuWindow.alignRight && menuContainer.dynamicCornerRadius > 0.5
                     x: parent.width - menuContainer.dynamicCornerRadius
                     y: 0
                     width: menuContainer.dynamicCornerRadius
                     height: menuContainer.dynamicCornerRadius
-                    color: ThemeBackend.base
+                    color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                 }
 
                 Rectangle {
-                    visible: trayMenuWindow.isSolid && trayMenuWindow.isSideBar && trayMenuWindow.alignRight && menuContainer.dynamicCornerRadius > 0.5
+                    visible: !ThemeBackend.liquidGlass && trayMenuWindow.isSolid && trayMenuWindow.isSideBar && trayMenuWindow.alignRight && menuContainer.dynamicCornerRadius > 0.5
                     x: parent.width - menuContainer.dynamicCornerRadius
                     y: parent.height - menuContainer.dynamicCornerRadius
                     width: menuContainer.dynamicCornerRadius
                     height: menuContainer.dynamicCornerRadius
-                    color: ThemeBackend.base
+                    color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                 }
 
                 HoverHandler {
@@ -504,19 +535,30 @@ PanelWindow {
                             anchors.fill: parent
                             visible: !rootItemDelegate.isSep
                             radius: trayMenuWindow.s(4)
-                            color: itemMouse.containsMouse ? ThemeBackend.surface0 : "transparent"
+                            color: rootHoverGlass.active ? "transparent" : (itemMouse.containsMouse ? ThemeBackend.surface0 : "transparent")
                             opacity: (modelData && modelData.enabled) ? 1.0 : 0.4
+
+                            GlassFill {
+                                id: rootHoverGlass
+                                anchors.fill: parent
+                                radius: parent.radius
+                                allowed: itemMouse.containsMouse
+                                tintColor: ThemeBackend.surface0
+                                tintAmount: 0.3
+                                press: itemMouse.pressed ? 0.8 : 0.2
+                            }
 
                             Image {
                                 id: itemIcon
                                 anchors.left: parent.left
                                 anchors.leftMargin: trayMenuWindow.s(8)
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: (modelData && modelData.icon && modelData.icon !== "") ? trayMenuWindow.s(16) : 0
+                                width: source !== "" ? trayMenuWindow.s(16) : 0
                                 height: trayMenuWindow.s(16)
-                                source: (modelData && modelData.icon) ? modelData.icon : ""
+                                source: modelData ? trayMenuWindow.resolveMenuIcon(modelData.icon) : ""
                                 sourceSize: Qt.size(trayMenuWindow.s(16), trayMenuWindow.s(16))
-                                visible: width > 0
+                                fillMode: Image.PreserveAspectFit
+                                visible: width > 0 && status === Image.Ready
                             }
 
                             Text {
@@ -675,45 +717,58 @@ PanelWindow {
                 transformOrigin: expandRight ? Item.Left : Item.Right
 
                 ShaderEffect {
-                    visible: submenuPopout.subCornerRadius > 0.5
+                    visible: submenuPopout.subCornerRadius > 0.5 && !ThemeBackend.liquidGlass
                     x: submenuPopout.expandRight ? 0 : (parent.width - submenuPopout.subCornerRadius)
                     y: -submenuPopout.subCornerRadius
                     width: submenuPopout.subCornerRadius
                     height: submenuPopout.subCornerRadius
                     property vector2d itemSize: Qt.vector2d(width, height)
                     property real cornerIndex: submenuPopout.expandRight ? 2.0 : 3.0
-                    property color color: ThemeBackend.base
+                    property color color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                     fragmentShader: "file://" + Caching.kizashiDir + "/assets/shaders/ui/corner_cutout.frag.qsb"
                 }
 
                 ShaderEffect {
-                    visible: submenuPopout.subCornerRadius > 0.5
+                    visible: submenuPopout.subCornerRadius > 0.5 && !ThemeBackend.liquidGlass
                     x: submenuPopout.expandRight ? 0 : (parent.width - submenuPopout.subCornerRadius)
                     y: parent.height
                     width: submenuPopout.subCornerRadius
                     height: submenuPopout.subCornerRadius
                     property vector2d itemSize: Qt.vector2d(width, height)
                     property real cornerIndex: submenuPopout.expandRight ? 0.0 : 1.0
-                    property color color: ThemeBackend.base
+                    property color color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                     fragmentShader: "file://" + Caching.kizashiDir + "/assets/shaders/ui/corner_cutout.frag.qsb"
                 }
 
                 Rectangle {
                     id: subMenuBox
                     anchors.fill: parent
-                    color: ThemeBackend.base
+                    color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                     radius: trayMenuWindow.cornerRadius
+                    topLeftRadius: (ThemeBackend.liquidGlass && submenuPopout.expandRight) ? 0 : trayMenuWindow.cornerRadius
+                    bottomLeftRadius: (ThemeBackend.liquidGlass && submenuPopout.expandRight) ? 0 : trayMenuWindow.cornerRadius
+                    topRightRadius: (ThemeBackend.liquidGlass && !submenuPopout.expandRight) ? 0 : trayMenuWindow.cornerRadius
+                    bottomRightRadius: (ThemeBackend.liquidGlass && !submenuPopout.expandRight) ? 0 : trayMenuWindow.cornerRadius
                     border.width: 0
                     border.color: "transparent"
                     clip: true
 
+                    WallpaperBlur {
+                        z: -1
+                        anchors.fill: parent
+                        topLeftRadius: parent.topLeftRadius
+                        topRightRadius: parent.topRightRadius
+                        bottomLeftRadius: parent.bottomLeftRadius
+                        bottomRightRadius: parent.bottomRightRadius
+                    }
+
                     Rectangle {
                         visible: submenuPopout.expandRight && submenuPopout.subCornerRadius > 0.5
                         x: 0
                         y: 0
                         width: submenuPopout.subCornerRadius
                         height: submenuPopout.subCornerRadius
-                        color: ThemeBackend.base
+                        color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                     }
 
                     Rectangle {
@@ -722,7 +777,7 @@ PanelWindow {
                         y: parent.height - submenuPopout.subCornerRadius
                         width: submenuPopout.subCornerRadius
                         height: submenuPopout.subCornerRadius
-                        color: ThemeBackend.base
+                        color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                     }
 
                     Rectangle {
@@ -731,7 +786,7 @@ PanelWindow {
                         y: 0
                         width: submenuPopout.subCornerRadius
                         height: submenuPopout.subCornerRadius
-                        color: ThemeBackend.base
+                        color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                     }
 
                     Rectangle {
@@ -740,7 +795,7 @@ PanelWindow {
                         y: parent.height - submenuPopout.subCornerRadius
                         width: submenuPopout.subCornerRadius
                         height: submenuPopout.subCornerRadius
-                        color: ThemeBackend.base
+                        color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
                     }
 
                     HoverHandler {
@@ -782,19 +837,30 @@ PanelWindow {
                                 anchors.fill: parent
                                 visible: !subItemDelegate.isSep
                                 radius: trayMenuWindow.s(4)
-                                color: subItemMouse.containsMouse ? ThemeBackend.surface0 : "transparent"
+                                color: subHoverGlass.active ? "transparent" : (subItemMouse.containsMouse ? ThemeBackend.surface0 : "transparent")
                                 opacity: (modelData && modelData.enabled) ? 1.0 : 0.4
+
+                                GlassFill {
+                                    id: subHoverGlass
+                                    anchors.fill: parent
+                                    radius: parent.radius
+                                    allowed: subItemMouse.containsMouse
+                                    tintColor: ThemeBackend.surface0
+                                    tintAmount: 0.3
+                                    press: subItemMouse.pressed ? 0.8 : 0.2
+                                }
 
                                 Image {
                                     id: subItemIcon
                                     anchors.left: parent.left
                                     anchors.leftMargin: trayMenuWindow.s(8)
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: (modelData && modelData.icon && modelData.icon !== "") ? trayMenuWindow.s(16) : 0
+                                    width: source !== "" ? trayMenuWindow.s(16) : 0
                                     height: trayMenuWindow.s(16)
-                                    source: (modelData && modelData.icon) ? modelData.icon : ""
+                                    source: modelData ? trayMenuWindow.resolveMenuIcon(modelData.icon) : ""
                                     sourceSize: Qt.size(trayMenuWindow.s(16), trayMenuWindow.s(16))
-                                    visible: width > 0
+                                    fillMode: Image.PreserveAspectFit
+                                    visible: width > 0 && status === Image.Ready
                                 }
 
                                 Text {

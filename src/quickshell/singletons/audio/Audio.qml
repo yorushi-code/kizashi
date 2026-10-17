@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import QtQml
 import Quickshell
 import Quickshell.Services.Pipewire
 import "../../"
@@ -7,8 +8,52 @@ import "../../"
 Singleton {
     id: root
 
+    function pipewireNodes() {
+        try {
+            const model = Pipewire.nodes;
+            const list = model ? model.values : null;
+            return list ? list : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    property var trackedNodes: []
+
+    function refreshTrackedNodes() {
+        const list = root.pipewireNodes();
+        root.trackedNodes = list ? list : [];
+    }
+
+    Connections {
+        target: Pipewire.nodes ?? null
+        ignoreUnknownSignals: true
+        function onValuesChanged() {
+            root.refreshTrackedNodes();
+            settle.restart();
+        }
+    }
+
+    Component.onCompleted: {
+        root.refreshTrackedNodes();
+        root.rebuild();
+        root.refreshActiveStream();
+    }
+
     PwObjectTracker {
-        objects: Pipewire.nodes.values
+        objects: root.trackedNodes
+    }
+
+    function isKizashiStream(node) {
+        if (!node || !node.properties) return false;
+        let p = node.properties;
+        let appId = p["application.id"] || "";
+        let appName = p["application.name"] || "";
+        if (appId === "kizashi-sfx" || appId === "kizashi" || appId === "org.kizashi.sfx") return true;
+        if (appName === "kizashi-sfx" || appName === "kizashi") return true;
+        let mediaFile = p["media.filename"] || p["media.name"] || "";
+        if (mediaFile.indexOf("assets/sounds/") !== -1) return true;
+        return false;
     }
 
     // Списки собираются императивно, а не биндингом, и это здесь главное.
@@ -37,7 +82,7 @@ Singleton {
 
     function _collect(pred) {
         var arr = [];
-        for (const n of Pipewire.nodes.values) {
+        for (const n of root.pipewireNodes()) {
             if (pred(n)) arr.push(n);
         }
         var keys = new Map();
@@ -63,6 +108,52 @@ Singleton {
     function _isEffect(n) {
         var name = n.name || "";
         return name.startsWith("effect_input.") || name.startsWith("effect_output.");
+
+    function computeHasActiveStream(list) {
+        try {
+            for (const n of list ?? []) {
+                if (!n || !n.audio) continue;
+                let p = n.properties;
+                if (!p || p["media.class"] !== "Stream/Output/Audio") continue;
+                let corked = p["pulse.corked"];
+                if (corked === "true" || corked === true) continue;
+                if (n.audio.muted || (n.audio.volume !== undefined && n.audio.volume <= 0.001)) continue;
+                return true;
+            }
+        } catch (e) {
+        }
+        return false;
+    }
+
+    property bool hasActiveStream: false
+
+    function refreshActiveStream() {
+        const active = root.computeHasActiveStream(root.apps) === true;
+        if (root.hasActiveStream !== active) root.hasActiveStream = active;
+    }
+
+    onAppsChanged: root.refreshActiveStream()
+
+    Instantiator {
+        model: root.apps
+
+        delegate: QtObject {
+            id: streamWatch
+            required property var modelData
+
+            property Connections nodeConnections: Connections {
+                target: streamWatch.modelData
+                ignoreUnknownSignals: true
+                function onPropertiesChanged() { root.refreshActiveStream(); }
+            }
+
+            property Connections audioConnections: Connections {
+                target: streamWatch.modelData ? streamWatch.modelData.audio : null
+                ignoreUnknownSignals: true
+                function onMutedChanged() { root.refreshActiveStream(); }
+                function onVolumesChanged() { root.refreshActiveStream(); }
+            }
+        }
     }
 
     function rebuild() {
@@ -75,7 +166,8 @@ Singleton {
         var a = root._collect(function (n) {
             return n.isStream && n.audio && !root._isEffect(n)
                 && n.properties?.["application.id"] !== "org.PulseAudio.pavucontrol"
-                && n.properties?.["application.name"] !== Sounds.streamName;
+                && n.properties?.["application.name"] !== Sounds.streamName
+                && !root.isKizashiStream(n);
         });
 
         // Присваиваем только при смене состава: иначе модель сбрасывается
@@ -93,13 +185,6 @@ Singleton {
         onTriggered: root.rebuild()
     }
 
-    Connections {
-        target: Pipewire.nodes
-        ignoreUnknownSignals: true
-        function onValuesChanged() { settle.restart(); }
-    }
-
-    Component.onCompleted: root.rebuild()
 
     readonly property PwNode defaultSink: Pipewire.defaultAudioSink
     readonly property PwNode defaultSource: Pipewire.defaultAudioSource

@@ -96,15 +96,6 @@ check_supported_os() {
     fi
 }
 
-enable_multilib() {
-    if [ -f /etc/pacman.conf ]; then
-        if grep -q "^#\[multilib\]" /etc/pacman.conf; then
-            sudo sed -i '/^#\[multilib\]/{s/^#//;n;s/^#//}' /etc/pacman.conf
-            sudo pacman -Sy --noconfirm >/dev/null 2>&1 || true
-        fi
-    fi
-}
-
 bootstrap_installer_deps() {
     suppress_tty_sleep
     [ "$PKG_FAMILY" = "arch" ] && enable_multilib
@@ -161,6 +152,68 @@ install_fonts() {
     fi
 }
 
+configure_qt_icon_theme() {
+    local icon_theme="Adwaita"
+    local config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+    local qtct
+
+    for qtct in qt5ct qt6ct; do
+        local conf="$config_home/$qtct/$qtct.conf"
+        mkdir -p "$config_home/$qtct"
+        if [ ! -f "$conf" ]; then
+            printf '[Appearance]\nicon_theme=%s\n' "$icon_theme" > "$conf"
+        elif grep -q '^icon_theme=.\+' "$conf"; then
+            continue
+        elif grep -q '^icon_theme=' "$conf"; then
+            sed -i "s|^icon_theme=.*|icon_theme=$icon_theme|" "$conf"
+        elif grep -q '^\[Appearance\]' "$conf"; then
+            sed -i "/^\[Appearance\]/a icon_theme=$icon_theme" "$conf"
+        else
+            printf '\n[Appearance]\nicon_theme=%s\n' "$icon_theme" >> "$conf"
+        fi
+    done
+
+    local env_dir="$config_home/environment.d"
+    local env_file="$env_dir/kizashi-qt.conf"
+    if [ -z "${QT_QPA_PLATFORMTHEME:-}" ] && ! grep -rqs '^QT_QPA_PLATFORMTHEME=' "$env_dir" 2>/dev/null; then
+        mkdir -p "$env_dir"
+        printf 'QT_QPA_PLATFORMTHEME=qt6ct\n' > "$env_file"
+    fi
+}
+
+compositor_package_name() {
+    case "$1" in
+        mango) echo "mangowm" ;;
+        *) echo "$1" ;;
+    esac
+}
+
+find_sddm_binary() {
+    local name="$1" dir
+    local IFS=:
+    for dir in ${SDDM_SEARCH_PATH:-/usr/local/bin:/usr/bin:/bin}; do
+        if [ -x "$dir/$name" ]; then
+            echo "$dir/$name"
+            return 0
+        fi
+    done
+    return 1
+}
+
+sddm_has_xorg() {
+    find_sddm_binary Xorg >/dev/null || find_sddm_binary X >/dev/null
+}
+
+sddm_packages() {
+    printf '%s\n' sddm qt6-declarative qt6-svg "${PM_SDDM_EXTRA_PKGS[@]}"
+    if [ "$SDDM_WAYLAND" = true ] \
+        && ! find_sddm_binary kwin_wayland >/dev/null \
+        && ! find_sddm_binary weston >/dev/null \
+        && ! sddm_has_xorg; then
+        echo weston
+    fi
+}
+
 install_dependencies() {
     local install_state="${1:-$INSTALL_STATE}"
     local is_reinstall="${2:-$IS_REINSTALL}"
@@ -209,7 +262,7 @@ install_dependencies() {
             echo -e "\e[34m::\e[0m \e[1m$(t "installer.deps.installing_pkg" "pkg=$pkg")\e[0m"
             echo -e "\e[36m=================================================================\e[0m"
 
-            if install_pkg "$pkg" "$SAFE_JOBS"; then
+            if pkg_install "$pkg"; then
                 echo -e "\n\e[32m[ OK ] $(t "installer.deps.install_ok" "pkg=$pkg")\e[0m"
             else
                 echo -e "\n\e[31m[ FAILED ] $(t "installer.deps.install_failed" "pkg=$pkg")\e[0m"
@@ -221,4 +274,5 @@ install_dependencies() {
 
     pkg_install_extra
     install_fonts
+    configure_qt_icon_theme
 }

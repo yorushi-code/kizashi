@@ -41,11 +41,20 @@ Item {
         id: bgTrack
         anchors.fill: parent
         radius: root.cornerRadius
-        color: root.backgroundColor
+        color: glass.active ? "transparent" : root.backgroundColor
         opacity: root.enabled ? 1.0 : 0.5
         clip: true
 
         Behavior on opacity { NumberAnimation { duration: 180 } }
+
+        GlassFill {
+            id: glass
+            anchors.fill: parent
+            radius: parent.radius
+            tintColor: root.backgroundColor
+            tintAmount: 0.22
+            Behavior on tintAmount { NumberAnimation { duration: 180 } }
+        }
 
         Item {
             id: fillContainer
@@ -53,7 +62,7 @@ Item {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             width: Math.max(0, Math.min(parent.width, parent.width * root.animPosition))
-            opacity: root.animPosition > 0.001 ? 1.0 : 0.0
+            opacity: root.animPosition > 0.001 ? (glass.active ? 0.6 : 1.0) : 0.0
             clip: true
 
             Behavior on opacity { NumberAnimation { duration: 180 } }
@@ -79,6 +88,23 @@ Item {
                 visible: root.glowOpacity > 0
             }
         }
+    }
+
+    GlassFill {
+        id: thumbGlass
+        readonly property real thumb: root.height + 8
+        width: thumb
+        height: thumb
+        x: Math.max(-4, Math.min(root.width - thumb + 4, root.width * root.animPosition - thumb / 2))
+        anchors.verticalCenter: parent.verticalCenter
+        radius: thumb / 2
+        tintColor: root.gradColor1
+        tintAmount: 0.3
+        shadow: 1
+        press: root.isDragging ? 1 : 0
+        scale: root.isDragging ? 1.2 : 1.0
+        Behavior on press { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
     }
 
     Rectangle {
