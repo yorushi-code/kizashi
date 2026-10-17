@@ -108,6 +108,7 @@ Singleton {
     function _isEffect(n) {
         var name = n.name || "";
         return name.startsWith("effect_input.") || name.startsWith("effect_output.");
+    }
 
     function computeHasActiveStream(list) {
         try {

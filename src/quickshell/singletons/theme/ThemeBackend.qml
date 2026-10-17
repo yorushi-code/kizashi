@@ -59,9 +59,9 @@ Item {
     Behavior on base { ColorAnimation { duration: root.paletteFade } }
     Behavior on mantle { ColorAnimation { duration: root.paletteFade } }
     Behavior on crust { ColorAnimation { duration: root.paletteFade } }
-    Behavior on text { ColorAnimation { duration: root.paletteFade } }
-    Behavior on subtext0 { ColorAnimation { duration: root.paletteFade } }
-    Behavior on subtext1 { ColorAnimation { duration: root.paletteFade } }
+    Behavior on _text { ColorAnimation { duration: root.paletteFade } }
+    Behavior on _subtext0 { ColorAnimation { duration: root.paletteFade } }
+    Behavior on _subtext1 { ColorAnimation { duration: root.paletteFade } }
     Behavior on surface0 { ColorAnimation { duration: root.paletteFade } }
     Behavior on surface1 { ColorAnimation { duration: root.paletteFade } }
     Behavior on surface2 { ColorAnimation { duration: root.paletteFade } }
